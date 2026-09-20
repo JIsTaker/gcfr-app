@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#173f2b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GCFR">
+  <title>GCFR</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <style>
+    html,body{margin:0;min-height:100%;background:#f3f5f3;color:#111814;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100dvh;display:grid;place-items:center;padding:24px}
+    .boot{width:min(100%,420px);background:#fff;border:1px solid #dfe4e1;border-radius:20px;padding:22px;box-shadow:0 8px 28px rgba(17,24,20,.07)}
+    .brand{font-size:28px;font-weight:900;color:#173f2b}.status{margin-top:8px;color:#69726d;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="boot">
+    <div class="brand">GCFR</div>
+    <div id="status" class="status">Loading current release…</div>
+  </div>
+
+  <script>
+    (async () => {
+      const FALLBACK = "v1.26";
+      const statusEl = document.getElementById("status");
+      const params = new URLSearchParams(location.search);
+
+      try {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {});
+        }
+
+        const response = await fetch("./release.json?ts=" + Date.now(), {
+          cache: "no-store"
+        });
+
+        if (!response.ok) throw new Error("Release state unavailable");
+
+        const state = await response.json();
+        localStorage.setItem("gcfr_release_state", JSON.stringify(state));
+
+        const failed = localStorage.getItem("gcfr_failed_release");
+        const recovery = localStorage.getItem("gcfr_recovery_release");
+
+        if (failed && state.current !== failed) {
+          localStorage.removeItem("gcfr_failed_release");
+          localStorage.removeItem("gcfr_recovery_release");
+        }
+
+        let version = state.current;
+        let channel = "current";
+
+        if (params.get("channel") === "patching" && state.patching) {
+          version = state.patching;
+          channel = "patching";
+        } else if (params.get("release")) {
+          const requested = params.get("release");
+          const allowed = [state.current, state.previous, state.patching].filter(Boolean);
+          if (allowed.includes(requested)) {
+            version = requested;
+            channel = params.get("recovery") === "1" ? "recovery" : "manual";
+          }
+        } else if (
+          failed === state.current
+          && recovery
+          && recovery === state.previous
+        ) {
+          version = recovery;
+          channel = "recovery";
+        }
+
+        if (!version) throw new Error("No release selected");
+
+        localStorage.setItem("gcfr_last_selected_release", version);
+        statusEl.textContent = `Opening ${version}…`;
+
+        const target = new URL(`./releases/${encodeURIComponent(version)}/index.html`, location.href);
+        target.searchParams.set("channel", channel);
+        location.replace(target.href);
+      } catch (error) {
+        console.error(error);
+        const cached = localStorage.getItem("gcfr_last_good_release") || FALLBACK;
+        statusEl.textContent = `Offline fallback: ${cached}`;
+        const target = new URL(`./releases/${encodeURIComponent(cached)}/index.html`, location.href);
+        target.searchParams.set("channel", "offline-fallback");
+        setTimeout(() => location.replace(target.href), 300);
+      }
+    })();
+  </script>
+</body>
+</html>
