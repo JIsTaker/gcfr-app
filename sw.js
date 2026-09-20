@@ -94,100 +94,11 @@ self.addEventListener("message", (event) => {
   }
 });
 
-self.addEventListener("push", (event) => {
-  event.waitUntil((async () => {
-    let payload = {};
-
-    try {
-      payload = event.data?.json() || {};
-    } catch {
-      payload = {
-        title: "GCFR",
-        body: event.data?.text() || "GCFR was updated."
-      };
-    }
-
-    const windows = await self.clients.matchAll({
-      type: "window",
-      includeUncontrolled: true
-    });
-
-    const visibleClients = windows.filter(
-      (client) => client.visibilityState === "visible"
-    );
-
-    if (visibleClients.length && !payload.force_show) {
-      for (const client of visibleClients) {
-        client.postMessage({
-          type: "GCFR_PUSH_FOREGROUND",
-          payload
-        });
-      }
-      return;
-    }
-
-    await self.registration.showNotification(
-      payload.title || "GCFR",
-      {
-        body: payload.body || "GCFR was updated.",
-        icon: atScope("icons/icon-192.png"),
-        badge: atScope("icons/icon-192.png"),
-        tag: payload.tag || `gcfr-${payload.event_id || Date.now()}`,
-        renotify: true,
-        silent: payload.silent === true,
-        vibrate:
-          payload.vibration === false
-            ? undefined
-            : [160, 80, 160],
-        data: {
-          url: payload.url || atScope("./"),
-          event_id: payload.event_id || null,
-          event_type: payload.event_type || null
-        }
-      }
-    );
-  })());
-});
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-
-  event.waitUntil((async () => {
-    const targetUrl =
-      event.notification.data?.url
-      || atScope("./");
-
-    const windows = await self.clients.matchAll({
-      type: "window",
-      includeUncontrolled: true
-    });
-
-    for (const client of windows) {
-      if ("focus" in client) {
-        await client.focus();
-
-        if ("navigate" in client && client.url !== targetUrl) {
-          try {
-            await client.navigate(targetUrl);
-          } catch {}
-        }
-
-        return;
-      }
-    }
-
-    if (self.clients.openWindow) {
-      await self.clients.openWindow(targetUrl);
-    }
-  })());
-});
-
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-
   if (url.origin !== scopeUrl.origin) return;
 
   const relativePath = url.pathname.startsWith(scopeUrl.pathname)
