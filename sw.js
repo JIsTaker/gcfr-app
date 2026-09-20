@@ -1,4 +1,4 @@
-const CORE_CACHE = "gcfr-core-v1";
+const CORE_CACHE = "gcfr-core-v2";
 const RELEASE_CACHE_PREFIX = "gcfr-release-";
 
 const scopeUrl = new URL(self.registration.scope);
@@ -23,6 +23,7 @@ async function fetchReleaseState() {
     const response = await fetch(atScope(`release.json?ts=${Date.now()}`), {
       cache: "no-store"
     });
+
     if (response.ok) {
       const cache = await caches.open(CORE_CACHE);
       await cache.put(atScope("release.json"), response.clone());
@@ -74,6 +75,14 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+
+    await Promise.all(
+      cacheNames
+        .filter((name) => name.startsWith("gcfr-core-") && name !== CORE_CACHE)
+        .map((name) => caches.delete(name))
+    );
+
     await warmReleaseSlots();
     await self.clients.claim();
   })());
@@ -83,6 +92,94 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "CACHE_RELEASE" && event.data.version) {
     event.waitUntil(cacheRelease(event.data.version));
   }
+});
+
+self.addEventListener("push", (event) => {
+  event.waitUntil((async () => {
+    let payload = {};
+
+    try {
+      payload = event.data?.json() || {};
+    } catch {
+      payload = {
+        title: "GCFR",
+        body: event.data?.text() || "GCFR was updated."
+      };
+    }
+
+    const windows = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    });
+
+    const visibleClients = windows.filter(
+      (client) => client.visibilityState === "visible"
+    );
+
+    if (visibleClients.length && !payload.force_show) {
+      for (const client of visibleClients) {
+        client.postMessage({
+          type: "GCFR_PUSH_FOREGROUND",
+          payload
+        });
+      }
+      return;
+    }
+
+    await self.registration.showNotification(
+      payload.title || "GCFR",
+      {
+        body: payload.body || "GCFR was updated.",
+        icon: atScope("icons/icon-192.png"),
+        badge: atScope("icons/icon-192.png"),
+        tag: payload.tag || `gcfr-${payload.event_id || Date.now()}`,
+        renotify: true,
+        silent: payload.silent === true,
+        vibrate:
+          payload.vibration === false
+            ? undefined
+            : [160, 80, 160],
+        data: {
+          url: payload.url || atScope("./"),
+          event_id: payload.event_id || null,
+          event_type: payload.event_type || null
+        }
+      }
+    );
+  })());
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  event.waitUntil((async () => {
+    const targetUrl =
+      event.notification.data?.url
+      || atScope("./");
+
+    const windows = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    });
+
+    for (const client of windows) {
+      if ("focus" in client) {
+        await client.focus();
+
+        if ("navigate" in client && client.url !== targetUrl) {
+          try {
+            await client.navigate(targetUrl);
+          } catch {}
+        }
+
+        return;
+      }
+    }
+
+    if (self.clients.openWindow) {
+      await self.clients.openWindow(targetUrl);
+    }
+  })());
 });
 
 self.addEventListener("fetch", (event) => {
@@ -106,7 +203,9 @@ self.addEventListener("fetch", (event) => {
         return response;
       } catch {
         return (await caches.match(atScope("release.json")))
-          || new Response("{}", { headers: { "Content-Type": "application/json" } });
+          || new Response("{}", {
+            headers: { "Content-Type": "application/json" }
+          });
       }
     })());
     return;
@@ -119,18 +218,21 @@ self.addEventListener("fetch", (event) => {
 
       try {
         const response = await fetch(request);
+
         if (response.ok) {
           const parts = relativePath.split("/");
           const version = parts[1];
           const cache = await caches.open(`${RELEASE_CACHE_PREFIX}${version}`);
           await cache.put(request, response.clone());
         }
+
         return response;
       } catch {
         if (request.mode === "navigate") {
           return (await caches.match(atScope("offline.html")))
             || new Response("Offline", { status: 503 });
         }
+
         throw new Error("Offline");
       }
     })());
@@ -155,10 +257,12 @@ self.addEventListener("fetch", (event) => {
 
     try {
       const response = await fetch(request);
+
       if (response.ok) {
         const cache = await caches.open(CORE_CACHE);
         await cache.put(request, response.clone());
       }
+
       return response;
     } catch {
       return new Response("", { status: 503 });
