@@ -218,6 +218,45 @@
           <button class="secondary" type="submit">Add</button>
         </form>
 
+        <div id="manualProductRegisterPanel" class="manual-product-register hidden">
+          <div class="manual-product-register-head">
+            <div>
+              <strong>Product not in database</strong>
+              <div class="item-sub">Register it manually and add it to this Draft.</div>
+            </div>
+            <button id="manualProductRegisterCloseBtn" class="text-button" type="button">Close</button>
+          </div>
+
+          <form id="manualProductRegisterForm" class="stack">
+            <label>
+              <span>Product Code</span>
+              <input
+                id="manualProductRegisterCode"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="40"
+                readonly
+                required
+              >
+            </label>
+
+            <label>
+              <span>Product Name</span>
+              <input
+                id="manualProductRegisterName"
+                autocomplete="off"
+                maxlength="160"
+                placeholder="Product Name"
+                required
+              >
+            </label>
+
+            <button id="manualProductRegisterBtn" class="secondary full" type="submit">
+              Register & Add
+            </button>
+          </form>
+        </div>
+
         <div class="divider"><span>or manual item</span></div>
 
         <form id="manualItemForm" class="inline-form">
@@ -599,14 +638,6 @@
 
       <div class="card">
         <div class="section-head">
-          <div><h2>Barcode conflicts</h2><p id="barcodeConflictCount" class="muted"></p></div>
-          <button id="refreshBarcodeConflictsBtn" type="button" class="icon-button" aria-label="Refresh barcode conflicts">↻</button>
-        </div>
-        <div id="barcodeConflictList" class="list"></div>
-      </div>
-
-      <div class="card">
-        <div class="section-head">
           <div>
             <h2>Password Reset Requests</h2>
             <p class="muted">Pending, email sent and completed requests are kept here until Joey deletes them.</p>
@@ -771,21 +802,8 @@
     </nav>
   </div>
 
-  <dialog id="runBarcodeLookupDialog" class="run-barcode-lookup-dialog" aria-labelledby="runBarcodeLookupTitle">
-    <div class="run-lookup-heading">
-      <h2 id="runBarcodeLookupTitle">Barcode Lookup</h2>
-      <button id="runBarcodeLookupCloseBtn" type="button" class="secondary" autofocus>Close</button>
-    </div>
-    <div id="runBarcodeLookupName" class="run-lookup-product-name"></div>
-    <div class="run-lookup-product-code">Product Code: <span id="runBarcodeLookupProductCode"></span></div>
-    <p id="runBarcodeLookupStatus" class="run-lookup-status" role="status" aria-live="polite"></p>
-    <div id="runBarcodeLookupResults"></div>
-    <button id="runBarcodeLookupRetryBtn" type="button" class="secondary full hidden">Try again</button>
-  </dialog>
-
   <script src="../../release-client.js" defer></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>
-
 

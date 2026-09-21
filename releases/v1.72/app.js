@@ -19,10 +19,6 @@ function isDelegateManager() {
   return DAILY_MANAGER_USERS.has(currentUser?.id);
 }
 
-function canAddTicketBarcode() {
-  return isOwnerUser() || isDelegateManager();
-}
-
 function canManageDailyOperations() {
   return isOwnerUser() || isDelegateManager();
 }
@@ -52,7 +48,7 @@ let currentUser = null;
 let currentProfile = null;
 let selectedChecklistDate = localDateString(new Date());
 let selectedHistoryDate = localDateString(new Date());
-let draft = loadDraft();
+let draft = [];
 let scanner = null;
 let adminBarcodeScanner = null;
 let pendingUnknownBarcode = "";
@@ -221,6 +217,9 @@ async function enterApp() {
   currentUser = data.user;
   currentProfile = await loadProfile(currentUser.id);
 
+  resetAppTransientUiForAccountChange();
+  draft = loadDraft(currentUser.id);
+
   if (rememberLoginPreference() && currentProfile?.username) {
     localStorage.setItem(REMEMBER_USERNAME_KEY, currentProfile.username);
   }
@@ -258,7 +257,6 @@ async function enterApp() {
     showAdminHomeView();
     await refreshAdminRequests();
     await refreshProcessPendingCount();
-    await refreshBarcodeConflicts();
   }
 
   await initializeChatUnreadState();
@@ -266,19 +264,22 @@ async function enterApp() {
 }
 
 async function leaveApp() {
-  closeRunBarcodeLookup();
-  stopScanner();
-  stopAdminBarcodeScanner();
+  resetAppTransientUiForAccountChange();
+
   realtimeChannels.forEach((channel) => supabase.removeChannel(channel));
   realtimeChannels = [];
+
   currentUser = null;
   currentProfile = null;
+  draft = [];
   chatMessages = [];
   chatProfileMap = new Map();
   rosterDayShifts = [];
   rosterProfiles = [];
   rosterProfileMap = new Map();
   rosterInitialScrollDone = false;
+
+  renderDraft();
 
   if ($("chatNavBadge")) {
     $("chatNavBadge").classList.add("hidden");
@@ -290,6 +291,8 @@ async function leaveApp() {
   document.body.classList.remove("chat-screen-lock");
   $("appShell").classList.add("hidden");
   $("authShell").classList.remove("hidden");
+
+  resetAuthFormsForCleanEntry();
   authView("loginForm");
 }
 
@@ -379,6 +382,211 @@ function subscribeRealtime() {
   );
 }
 
+
+function resetSignupForm() {
+  $("signupForm")?.reset();
+
+  if ($("displayNamePreview")) {
+    $("displayNamePreview").textContent = "-";
+  }
+}
+
+function resetAuthFormsForCleanEntry() {
+  $("loginForm")?.reset();
+  resetSignupForm();
+  $("forgotForm")?.reset();
+  $("recoveryForm")?.reset();
+
+  if ($("loginPassword")) $("loginPassword").value = "";
+  if ($("recoveryPassword")) $("recoveryPassword").value = "";
+  if ($("recoveryConfirmPassword")) $("recoveryConfirmPassword").value = "";
+
+  setAuthStatus("");
+  hydrateLoginMemory();
+}
+
+function resetScannerUiState() {
+  clearTimeout(barcodeLinkSearchTimer);
+  barcodeLinkSearchTimer = null;
+
+  try {
+    scanner?.stop();
+  } catch {}
+
+  scanner = null;
+
+  $("scannerWrap")?.classList.add("hidden");
+
+  if ($("reader")) {
+    $("reader").innerHTML = "";
+  }
+
+  if ($("scanStatus")) {
+    $("scanStatus").textContent = "Starting camera…";
+  }
+
+  closeBarcodeLinkPanel();
+
+  if ($("unknownBarcodeValue")) {
+    $("unknownBarcodeValue").textContent = "";
+  }
+}
+
+function resetAdminScannerUiState() {
+  try {
+    adminBarcodeScanner?.stop();
+  } catch {}
+
+  adminBarcodeScanner = null;
+
+  $("adminScannerWrap")?.classList.add("hidden");
+
+  if ($("adminReader")) {
+    $("adminReader").innerHTML = "";
+  }
+
+  if ($("adminScanStatus")) {
+    $("adminScanStatus").textContent = "Starting camera…";
+  }
+}
+
+function clearElementValue(id) {
+  const element = $(id);
+  if (element && "value" in element) {
+    element.value = "";
+  }
+}
+
+function clearElementHtml(id, placeholder = "") {
+  const element = $(id);
+  if (element) {
+    element.innerHTML = placeholder;
+  }
+}
+
+function resetAppTransientUiForAccountChange() {
+  resetScannerUiState();
+  resetAdminScannerUiState();
+
+  document
+    .querySelectorAll("#appShell form")
+    .forEach((form) => form.reset());
+
+  [
+    "productSearch",
+    "manualCode",
+    "manualItemName",
+    "barcodeLinkSearch",
+    "barcodeManualProductCode",
+    "barcodeManualProductName",
+    "adminBarcodeDataSearch",
+    "chatInput",
+    "newTaskTitle",
+  ].forEach(clearElementValue);
+
+  hideProductSearchResults();
+  closeManualProductRegistration();
+
+  if ($("quickTemplateList")) {
+    $("quickTemplateList")
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+  }
+
+  $("quickAddPanel")?.classList.add("hidden");
+
+  resetRunBulkDelete();
+  resetChecklistBulkDelete();
+
+  runBulkDeleteIds.clear();
+  currentVisibleRunIds = [];
+  checklistPendingRemovalMap = new Map();
+
+  if ($("runBulkSelectAll")) {
+    $("runBulkSelectAll").checked = false;
+    $("runBulkSelectAll").indeterminate = false;
+  }
+
+  selectedChecklistDate = localDateString(new Date());
+  selectedHistoryDate = localDateString(new Date());
+  rosterSelectedDate = localDateString(new Date());
+  rosterCalendarMonth = firstDayOfMonthString(rosterSelectedDate);
+  rosterViewMode = "all";
+  rosterCalendarOpen = false;
+  rosterWeekOverviewOpen = false;
+  rosterShiftEntryMode = "daily";
+  rosterDayShifts = [];
+  rosterWeekShifts = [];
+  rosterMyShiftDates = new Set();
+  rosterProfiles = [];
+  rosterProfileMap = new Map();
+  rosterInitialScrollDone = false;
+
+  $("rosterCalendarPanel")?.classList.add("hidden");
+  $("rosterWeekOverview")?.classList.add("hidden");
+  $("rosterScheduler")?.classList.remove("hidden");
+  $("rosterShiftFormWrap")?.classList.add("hidden");
+
+  $("rosterAllBtn")?.classList.add("active");
+  $("rosterMineBtn")?.classList.remove("active");
+  $("rosterDailyViewBtn")?.classList.add("active");
+  $("rosterThisWeekBtn")?.classList.remove("active");
+
+  if ($("chatInput")) {
+    $("chatInput").style.height = "auto";
+  }
+
+  resetAdminMappingForm();
+
+  if ($("adminBarcodeDataSearch")) {
+    $("adminBarcodeDataSearch").value = "";
+  }
+
+  if ($("adminHomeView")) $("adminHomeView").classList.remove("hidden");
+  if ($("adminBarcodeDetailView")) $("adminBarcodeDetailView").classList.add("hidden");
+  if ($("adminProcessPendingView")) $("adminProcessPendingView").classList.add("hidden");
+
+  const emptyState = `<div class="empty-state">Loading...</div>`;
+
+  clearElementHtml("runsList", emptyState);
+  clearElementHtml("historyList", emptyState);
+  clearElementHtml("checklistSections", emptyState);
+  clearElementHtml("chatMessages", `<div class="empty-state">No messages yet.</div>`);
+  clearElementHtml("rosterScheduler", `<div class="empty-state">No shifts for this date.</div>`);
+  clearElementHtml("rosterWeekOverviewGrid", "");
+  clearElementHtml("adminBarcodeDataList", "");
+  clearElementHtml("processPendingList", "");
+
+  adminBarcodeMappings = [];
+  chatMessages = [];
+  chatProfileMap = new Map();
+
+  if ($("chatNavBadge")) {
+    $("chatNavBadge").classList.add("hidden");
+    $("chatNavBadge").textContent = "0";
+  }
+
+  if ($("adminBadge")) {
+    $("adminBadge").classList.add("hidden");
+    $("adminBadge").textContent = "0";
+  }
+
+  if ($("processPendingBadge")) {
+    $("processPendingBadge").classList.add("hidden");
+    $("processPendingBadge").textContent = "0";
+  }
+
+  if ($("userDisplay")) $("userDisplay").textContent = "";
+  if ($("accountName")) $("accountName").textContent = "-";
+  if ($("accountUsername")) $("accountUsername").textContent = "-";
+  if ($("accountRole")) $("accountRole").textContent = "-";
+
+  $("toast")?.classList.add("hidden");
+  clearTimeout(showToast.timer);
+}
+
 // ---------- AUTH ----------
 $("loginTab").onclick = () => authView("loginForm");
 $("signupTab").onclick = () => authView("signupForm");
@@ -409,6 +617,7 @@ $("loginForm").addEventListener("submit", async (event) => {
     await applyReturnedSession(data);
     saveLoginMemory(username);
 
+    $("loginPassword").value = "";
     setAuthStatus("");
     await enterApp();
   } catch (error) {
@@ -437,9 +646,12 @@ $("signupForm").addEventListener("submit", async (event) => {
       confirmPassword,
     });
 
-    await applyReturnedSession(data);
-    rememberSignupSession($("signupUsername").value.trim());
+    const createdUsername = $("signupUsername").value.trim();
 
+    await applyReturnedSession(data);
+    rememberSignupSession(createdUsername);
+
+    resetSignupForm();
     setAuthStatus("");
     await enterApp();
   } catch (error) {
@@ -454,6 +666,8 @@ $("forgotForm").addEventListener("submit", async (event) => {
     const data = await callAuthFunction("request_password_reset", {
       username: $("forgotUsername").value.trim(),
     });
+
+    $("forgotForm").reset();
     setAuthStatus(data.message || "Request sent.");
   } catch (error) {
     setAuthStatus(error.message);
@@ -482,8 +696,12 @@ $("recoveryForm").addEventListener("submit", async (event) => {
     }
 
     clearSessionOnlyLoginMarker();
+    $("recoveryForm").reset();
+
     await supabase.auth.signOut();
     history.replaceState({}, document.title, location.pathname);
+
+    resetAuthFormsForCleanEntry();
     authView("loginForm");
     setAuthStatus("Password changed. Reset request completed. Log in with your new password.");
   } catch (error) {
@@ -552,7 +770,6 @@ document.querySelectorAll(".bottom-nav button[data-screen]").forEach((button) =>
       showAdminHomeView();
       await refreshAdminRequests();
       await refreshProcessPendingCount();
-      await refreshBarcodeConflicts();
     }
   });
 });
@@ -1929,31 +2146,56 @@ function formatChatDate(value) {
 }
 
 // ---------- DRAFT RUN LIST ----------
-function loadDraft() {
+function draftStorageKey(userId = currentUser?.id) {
+  return userId ? `gcfr_draft_run_${userId}` : "";
+}
+
+function loadDraft(userId = currentUser?.id) {
+  if (!userId) return [];
+
+  const key = draftStorageKey(userId);
   let items = [];
 
   try {
-    items = JSON.parse(localStorage.getItem("gcfr_draft_run") || "[]");
+    const saved = localStorage.getItem(key);
+
+    // One-time migration from the old shared draft key.
+    // The persisted session that first opens this version receives its own
+    // legacy draft, then the shared key is removed so it cannot leak to another user.
+    const legacy = localStorage.getItem("gcfr_draft_run");
+
+    if (saved !== null) {
+      items = JSON.parse(saved || "[]");
+    } else if (legacy !== null) {
+      items = JSON.parse(legacy || "[]");
+      localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : []));
+      localStorage.removeItem("gcfr_draft_run");
+    }
+
     if (!Array.isArray(items)) items = [];
   } catch {
     items = [];
   }
 
-  // Migrate any V1.6 separate Manual Draft into the same Draft once.
+  // Migrate any very old Manual Draft into the current user's Draft once.
   try {
     const oldManual = JSON.parse(localStorage.getItem("gcfr_manual_draft") || "[]");
+
     if (Array.isArray(oldManual) && oldManual.length) {
       for (const name of oldManual) {
         const clean = String(name || "").trim();
+
         if (clean) {
           items.push({
             manual_name: clean,
             name: clean,
+            gap_check_required: false,
           });
         }
       }
+
       localStorage.removeItem("gcfr_manual_draft");
-      localStorage.setItem("gcfr_draft_run", JSON.stringify(items));
+      localStorage.setItem(key, JSON.stringify(items));
     }
   } catch {}
 
@@ -1961,7 +2203,10 @@ function loadDraft() {
 }
 
 function saveDraft() {
-  localStorage.setItem("gcfr_draft_run", JSON.stringify(draft));
+  const key = draftStorageKey();
+  if (!key) return;
+
+  localStorage.setItem(key, JSON.stringify(draft));
 }
 
 function renderDraft() {
@@ -2044,12 +2289,25 @@ async function addCodeToDraft(code) {
     .maybeSingle();
 
   if (error) throw error;
+
   if (!data) {
-    showToast(`Product ${clean} was not found.`);
+    if (canManageDailyOperations()) {
+      openManualProductRegistration(clean);
+      return;
+    }
+
+    showToast(`Product ${clean} is not in the database. Add it as a manual item below.`);
     return;
   }
 
-  draft.push(data);
+  closeManualProductRegistration();
+
+  draft.push({
+    code: data.code,
+    name: data.name,
+    gap_check_required: false,
+  });
+
   saveDraft();
   renderDraft();
   showToast(`${data.name} added.`);
@@ -2064,6 +2322,95 @@ $("manualCodeForm").addEventListener("submit", async (event) => {
     showToast(error.message);
   }
 });
+
+
+function openManualProductRegistration(productCode) {
+  const panel = $("manualProductRegisterPanel");
+  if (!panel) return;
+
+  $("manualProductRegisterCode").value = String(productCode || "").trim();
+  $("manualProductRegisterName").value = "";
+  panel.classList.remove("hidden");
+
+  requestAnimationFrame(() => {
+    $("manualProductRegisterName")?.focus();
+  });
+}
+
+function closeManualProductRegistration() {
+  $("manualProductRegisterPanel")?.classList.add("hidden");
+
+  if ($("manualProductRegisterCode")) {
+    $("manualProductRegisterCode").value = "";
+  }
+
+  if ($("manualProductRegisterName")) {
+    $("manualProductRegisterName").value = "";
+  }
+}
+
+$("manualProductRegisterCloseBtn").onclick = closeManualProductRegistration;
+
+$("manualProductRegisterForm").onsubmit = async (event) => {
+  event.preventDefault();
+
+  if (!canManageDailyOperations()) {
+    showToast("You do not have permission to register catalog products.");
+    return;
+  }
+
+  const productCode = $("manualProductRegisterCode").value.trim();
+  const productName = $("manualProductRegisterName").value.trim();
+
+  if (!productCode || !productName) {
+    showToast("Enter Product Code and Product Name.");
+    return;
+  }
+
+  if (draft.some((item) => item.code === productCode)) {
+    closeManualProductRegistration();
+    showToast("Already in the draft.");
+    return;
+  }
+
+  const button = $("manualProductRegisterBtn");
+  button.disabled = true;
+  button.textContent = "Registering...";
+
+  const { data, error } = await supabase.rpc(
+    "register_manual_product_for_run",
+    {
+      _product_code: productCode,
+      _product_name: productName,
+    },
+  );
+
+  button.disabled = false;
+  button.textContent = "Register & Add";
+
+  if (error) {
+    showToast(error.message);
+    return;
+  }
+
+  const product = Array.isArray(data) && data.length
+    ? data[0]
+    : { code: productCode, name: productName };
+
+  productSearchCatalog = null;
+
+  draft.push({
+    code: product.code || productCode,
+    name: product.name || productName,
+    gap_check_required: false,
+  });
+
+  saveDraft();
+  renderDraft();
+  closeManualProductRegistration();
+
+  showToast(`${product.name || productName} registered and added.`);
+};
 
 
 // ---------- PRODUCT SEARCH ----------
@@ -2379,6 +2726,14 @@ $("submitRunBtn").onclick = async () => {
     saveDraft();
     renderDraft();
 
+    $("manualCodeForm")?.reset();
+    $("manualItemForm")?.reset();
+    closeManualProductRegistration();
+    resetScannerUiState();
+
+    clearElementValue("productSearch");
+    hideProductSearchResults();
+
     let submittedRunNumber = 1;
 
     const { data: submittedRun } = await supabase
@@ -2425,7 +2780,7 @@ $("manualItemForm").addEventListener("submit", (event) => {
 
 // ---------- CAMERA ----------
 $("scanBtn").onclick = startScanner;
-$("stopScannerBtn").onclick = stopScanner;
+$("stopScannerBtn").onclick = resetScannerUiState;
 $("barcodeLinkCloseBtn").onclick = closeBarcodeLinkPanel;
 
 $("barcodeLinkSearch").addEventListener("input", () => {
@@ -2548,15 +2903,15 @@ function showUnknownBarcode(barcode) {
   $("unknownBarcodeValue").textContent = barcode;
   $("barcodeLinkPanel").classList.remove("hidden");
 
-  const canAdd = canAddTicketBarcode();
+  const isAdmin = currentUser?.id === ADMIN_USER_ID;
 
-  $("barcodeAdminLinkTools").classList.toggle("hidden", !canAdd);
+  $("barcodeAdminLinkTools").classList.toggle("hidden", !isAdmin);
 
-  $("barcodeLinkMessage").textContent = canAdd
+  $("barcodeLinkMessage").textContent = isAdmin
     ? "Not linked yet. Search the product below and link it once."
-    : "Not linked yet. Search the product manually and ask Joey, Troy or Alex to link this barcode.";
+    : "Not linked yet. Search the product manually and ask Joey to link this barcode.";
 
-  if (canAdd) {
+  if (isAdmin) {
     $("barcodeLinkSearch").value = "";
     $("barcodeLinkResults").innerHTML = "";
     $("barcodeLinkResults").classList.add("hidden");
@@ -2594,7 +2949,7 @@ function closeBarcodeLinkPanel() {
 }
 
 async function searchProductsForBarcodeLink(query) {
-  if (!pendingUnknownBarcode || !canAddTicketBarcode()) return;
+  if (!pendingUnknownBarcode || currentUser?.id !== ADMIN_USER_ID) return;
 
   const results = $("barcodeLinkResults");
   results.innerHTML = "";
@@ -2641,39 +2996,30 @@ async function searchProductsForBarcodeLink(query) {
 }
 
 async function linkPendingBarcodeToProduct(product, button) {
-  if (!pendingUnknownBarcode || !canAddTicketBarcode()) return;
+  if (!pendingUnknownBarcode || currentUser?.id !== ADMIN_USER_ID) return;
 
   const barcode = pendingUnknownBarcode;
 
   button.disabled = true;
 
-  let data, error;
-  try {
-    ({ data, error } = await supabase.rpc(
-      isOwnerUser() ? "admin_link_product_barcode" : "add_ticket_barcode",
-      isOwnerUser()
-        ? { _barcode: barcode, _product_code: product.code, _barcode_type: "ticket_barcode" }
-        : { _barcode: barcode, _product_code: product.code },
-    ));
-  } catch (failure) {
-    error = failure;
-  }
+  const { error } = await supabase.rpc(
+    "admin_link_product_barcode",
+    {
+      _barcode: barcode,
+      _product_code: product.code,
+      _barcode_type: "ticket_barcode",
+    },
+  );
 
   if (error) {
     button.disabled = false;
 
-    if (/admin_link_product_barcode|add_ticket_barcode/i.test(error.message || "")) {
+    if (/admin_link_product_barcode/i.test(error.message || "")) {
       showToast("Barcode mapping database update has not been applied yet.");
     } else {
       showToast(error.message);
     }
 
-    return;
-  }
-
-  if (data?.status === "conflict") {
-    button.disabled = false;
-    showToast("Different information already exists for this barcode. Sent to Joey for review.");
     return;
   }
 
@@ -2690,7 +3036,7 @@ async function linkPendingBarcodeToProduct(product, button) {
 $("barcodeManualRegisterForm").onsubmit = async (event) => {
   event.preventDefault();
 
-  if (!pendingUnknownBarcode || !canAddTicketBarcode()) return;
+  if (!pendingUnknownBarcode || currentUser?.id !== ADMIN_USER_ID) return;
 
   const barcode = pendingUnknownBarcode.trim();
   const productCode = $("barcodeManualProductCode").value.trim();
@@ -2705,21 +3051,16 @@ $("barcodeManualRegisterForm").onsubmit = async (event) => {
   button.disabled = true;
   button.textContent = "Registering...";
 
-  let data, error;
-  try {
-    ({ data, error } = await supabase.rpc(
-      isOwnerUser() ? "admin_save_product_barcode" : "add_ticket_barcode",
-      isOwnerUser()
-        ? {
-            _original_barcode: "", _barcode: barcode, _product_code: productCode,
-            _product_name: productName,
-            _barcode_type: $("adminMappingBarcodeType")?.value || "ticket_barcode",
-          }
-        : { _barcode: barcode, _product_code: productCode, _product_name: productName },
-    ));
-  } catch (failure) {
-    error = failure;
-  }
+  const { data, error } = await supabase.rpc(
+    "admin_save_product_barcode",
+    {
+      _original_barcode: "",
+      _barcode: barcode,
+      _product_code: productCode,
+      _product_name: productName,
+      _barcode_type: $("adminMappingBarcodeType")?.value || "ticket_barcode",
+    },
+  );
 
   button.disabled = false;
   button.textContent = "Register Product & Link Barcode";
@@ -2735,12 +3076,6 @@ $("barcodeManualRegisterForm").onsubmit = async (event) => {
     code: data?.product_code || productCode,
     name: data?.product_name || productName,
   };
-
-  if (data?.status === "conflict") {
-    button.disabled = false;
-    showToast("Different information already exists for this barcode. Sent to Joey for review.");
-    return;
-  }
 
   closeBarcodeLinkPanel();
   await addResolvedProductToDraft(product);
@@ -2889,132 +3224,6 @@ $("runBulkDeleteConfirmBtn").onclick = async () => {
   await refreshRunsPreservingScroll();
   await refreshHistory();
 };
-
-
-// ---------- RUN TICKET BARCODE LOOKUP ----------
-let runBarcodeLookupRequest = 0;
-let runBarcodeLookupContext = null;
-let runBarcodeLookupScroll = null;
-let runBarcodeLookupOpener = null;
-
-function ticketBarcodeSvg(barcode) {
-  // Encode only the explicitly stored value. Never add/remove a digit or derive
-  // a Ticket Barcode from the product code.
-  if (!/^\d{7,8}$/.test(barcode)) throw new Error("Invalid saved ticket barcode.");
-  const left = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"];
-  const ean8 = barcode.length === 8 &&
-    (10 - [...barcode.slice(0, 7)].reduce((sum, digit, i) => sum + Number(digit) * (i % 2 ? 1 : 3), 0) % 10) % 10 === Number(barcode[7]);
-  let bits;
-  let quiet;
-  if (ean8) {
-    bits = "101" + [...barcode.slice(0, 4)].map(digit => left[Number(digit)]).join("") + "01010" +
-      [...barcode.slice(4)].map(digit => [...left[Number(digit)]].map(bit => bit === "1" ? "0" : "1").join("")).join("") + "101";
-    quiet = 7;
-  } else {
-    // Code 128 B preserves 7 digits or an 8-digit value that is not valid EAN-8.
-    // Standard Code 128 symbol widths, including checksum and stop symbols.
-    const widths = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213","221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212","223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323","131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123","113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113","312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214","112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142","121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341","131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232","2331112"];
-    const symbols = [104, ...[...barcode].map(digit => digit.charCodeAt(0) - 32)];
-    const checksum = symbols.reduce((sum, symbol, i) => sum + symbol * (i || 1), 0) % 103;
-    symbols.push(checksum, 106);
-    bits = symbols.map(symbol => [...widths[symbol]].map((width, i) => (i % 2 ? "0" : "1").repeat(Number(width))).join("")).join("");
-    quiet = 10;
-  }
-  const width = bits.length + quiet * 2;
-  let bars = "";
-  for (let x = 0; x < bits.length;) {
-    if (bits[x] === "0") { ++x; continue; }
-    const start = x;
-    while (bits[x] === "1") ++x;
-    bars += `<rect x="${start + quiet}" y="4" width="${x - start}" height="62"/>`;
-  }
-  return `<svg class="run-lookup-barcode" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 70" preserveAspectRatio="none" role="img" aria-label="Ticket Barcode ${barcode}"><rect width="${width}" height="70" fill="#fff"/><g fill="#000">${bars}</g></svg>`;
-}
-
-function clearRunBarcodeLookup() {
-  ++runBarcodeLookupRequest;
-  runBarcodeLookupContext = null;
-  $("runBarcodeLookupResults").replaceChildren();
-  $("runBarcodeLookupStatus").textContent = "";
-  $("runBarcodeLookupRetryBtn").classList.add("hidden");
-  document.body.classList.remove("run-barcode-lookup-open");
-  if (runBarcodeLookupOpener?.isConnected) runBarcodeLookupOpener.focus({ preventScroll: true });
-  if (runBarcodeLookupScroll) window.scrollTo(runBarcodeLookupScroll.x, runBarcodeLookupScroll.y);
-  runBarcodeLookupScroll = null;
-  runBarcodeLookupOpener = null;
-}
-
-function closeRunBarcodeLookup() {
-  const dialog = $("runBarcodeLookupDialog");
-  if (dialog?.open) dialog.close();
-  clearRunBarcodeLookup();
-}
-
-async function loadRunBarcodeLookup() {
-  const context = runBarcodeLookupContext;
-  if (!context || !currentUser) return;
-  const request = ++runBarcodeLookupRequest;
-  const userId = currentUser.id;
-  const status = $("runBarcodeLookupStatus");
-  const results = $("runBarcodeLookupResults");
-  results.replaceChildren();
-  status.textContent = "Loading saved ticket barcodes…";
-  $("runBarcodeLookupRetryBtn").classList.add("hidden");
-  try {
-    const { data, error } = await supabase.from("product_barcodes")
-      .select("barcode, product_code, barcode_type")
-      .eq("product_code", context.productCode)
-      .eq("barcode_type", "ticket_barcode");
-    if (request !== runBarcodeLookupRequest || currentUser?.id !== userId || !$("runBarcodeLookupDialog").open) return;
-    if (error) throw error;
-    // Keep explicit type and product checks even though the query filters them.
-    const barcodes = [...new Set((data || [])
-      .filter(row => row.barcode_type === "ticket_barcode" && row.product_code === context.productCode)
-      .map(row => String(row.barcode ?? ""))
-      .filter(barcode => /^\d{7,8}$/.test(barcode)))].sort();
-    if (!barcodes.length) {
-      status.textContent = "No saved 7–8 digit Ticket Barcode for this product.";
-      return;
-    }
-    status.textContent = "Scan the Ticket Barcode below with your device.";
-    for (const barcode of barcodes) {
-      const card = document.createElement("section");
-      card.className = "run-lookup-ticket";
-      card.innerHTML = `<div class="run-lookup-ticket-label">Ticket Barcode</div>${ticketBarcodeSvg(barcode)}<div class="run-lookup-ticket-number">${barcode}</div>`;
-      results.appendChild(card);
-    }
-  } catch (error) {
-    if (request !== runBarcodeLookupRequest || currentUser?.id !== userId || !$("runBarcodeLookupDialog").open) return;
-    console.error("Run barcode lookup:", error);
-    status.textContent = "Could not load ticket barcodes. Please try again.";
-    $("runBarcodeLookupRetryBtn").classList.remove("hidden");
-  }
-}
-
-function openRunBarcodeLookup(item, opener) {
-  if (!currentUser || !item.product_code) return;
-  const dialog = $("runBarcodeLookupDialog");
-  if (!dialog.open) {
-    runBarcodeLookupScroll = { x: window.scrollX, y: window.scrollY };
-    runBarcodeLookupOpener = opener;
-  }
-  runBarcodeLookupContext = { productCode: String(item.product_code) };
-  $("runBarcodeLookupName").textContent = item.products?.name || item.product_code;
-  $("runBarcodeLookupProductCode").textContent = item.product_code;
-  document.body.classList.add("run-barcode-lookup-open");
-  if (!dialog.open) dialog.showModal();
-  void loadRunBarcodeLookup();
-}
-
-$("runBarcodeLookupCloseBtn").onclick = closeRunBarcodeLookup;
-$("runBarcodeLookupRetryBtn").onclick = loadRunBarcodeLookup;
-$("runBarcodeLookupDialog").addEventListener("cancel", event => {
-  event.preventDefault();
-  closeRunBarcodeLookup();
-});
-$("runBarcodeLookupDialog").addEventListener("close", () => {
-  if (!$("runBarcodeLookupDialog").open) clearRunBarcodeLookup();
-});
 
 
 async function refreshRuns() {
@@ -3258,17 +3467,6 @@ function renderRunItem(item, nameMap, ticketBarcodeMap = new Map()) {
     ${item.manual_name ? '<div class="manual-tag">Manual item</div>' : ''}
     <div class="status-line status-${escapeHtml(item.status)}">${escapeHtml(statusText)}</div>
   `;
-
-  if (item.product_code) {
-    const lookup = document.createElement("button");
-    lookup.type = "button";
-    lookup.className = "secondary run-barcode-lookup-btn";
-    lookup.textContent = "Barcode Lookup";
-    lookup.setAttribute("aria-label", `Barcode Lookup: ${productName}`);
-    lookup.disabled = runBulkDeleteMode;
-    lookup.onclick = () => openRunBarcodeLookup(item, lookup);
-    row.appendChild(lookup);
-  }
 
   const gapLabel = document.createElement("label");
   gapLabel.className = "gap-check-toggle run-gap-check";
@@ -4188,7 +4386,7 @@ $("addTaskForm").addEventListener("submit", async (event) => {
     return;
   }
 
-  $("newTaskTitle").value = "";
+  $("addTaskForm").reset();
 
   showToast(`${title} added to ${periodLabel(period)}.`);
 
@@ -5403,7 +5601,7 @@ function showAdminBarcodeDetailView() {
 }
 
 $("adminScanBarcodeBtn").onclick = startAdminBarcodeScanner;
-$("adminStopScannerBtn").onclick = stopAdminBarcodeScanner;
+$("adminStopScannerBtn").onclick = resetAdminScannerUiState;
 
 function getAdminBarcodeScanner() {
   if (!adminBarcodeScanner) {
@@ -5526,6 +5724,7 @@ $("adminBarcodeMappingForm").onsubmit = async (event) => {
       _barcode: barcode,
       _product_code: productCode,
       _product_name: productName,
+      _barcode_type: $("adminMappingBarcodeType")?.value || "ticket_barcode",
     },
   );
 
@@ -5574,46 +5773,6 @@ function loadBarcodeMappingIntoAdminEditor(row, productName = "") {
 
   $("adminMappingProductCode").focus();
 }
-
-// ---------- OWNER BARCODE CONFLICT REVIEW ----------
-async function refreshBarcodeConflicts() {
-  const list = $("barcodeConflictList");
-  if (!list || !isOwnerUser()) return;
-  try {
-    const { data, error } = await supabase.from("barcode_conflicts")
-      .select("*").order("created_at", { ascending: false }).limit(100);
-    if (!isOwnerUser()) { list.innerHTML = ""; return; }
-    if (error) throw error;
-    list.innerHTML = "";
-    $("barcodeConflictCount").textContent = data.length ? `${data.length}${data.length === 100 ? "+" : ""} to review` : "No conflicts";
-    if (data.length) showToast("Barcode conflicts need your review. Open Admin → Barcode conflicts.");
-    for (const row of data) {
-      const card = document.createElement("div");
-      card.className = "card";
-      const reporter = DAILY_MANAGER_USERS.get(row.submitted_by) || "Joey";
-      card.innerHTML = `<strong>Barcode: ${escapeHtml(row.barcode)}</strong>
-        <p>Saved: ${escapeHtml(row.existing_product_code || "—")} · ${escapeHtml(row.existing_product_name || "—")} (${escapeHtml(row.existing_barcode_type || "—")})</p>
-        <p>Submitted: ${escapeHtml(row.submitted_product_code)} · ${escapeHtml(row.submitted_product_name || "—")}</p>
-        <p class="item-sub">${escapeHtml(reporter)} · ${escapeHtml(new Date(row.created_at).toLocaleString())}</p>
-        <p class="item-sub">Saved mapping unchanged. Use Barcode / Product Data to correct or delete it.</p>`;
-      const dismiss = document.createElement("button");
-      dismiss.type = "button"; dismiss.className = "secondary"; dismiss.textContent = "Dismiss report";
-      dismiss.onclick = async () => {
-        if (!isOwnerUser()) return;
-        dismiss.disabled = true;
-        try {
-          const { error } = await supabase.from("barcode_conflicts").delete().eq("id", row.id);
-          if (error) throw error;
-          await refreshBarcodeConflicts();
-        } catch (error) { showToast(error.message); dismiss.disabled = false; }
-      };
-      card.appendChild(dismiss); list.appendChild(card);
-    }
-  } catch (error) {
-    list.textContent = `Cannot load barcode conflicts: ${error.message}`;
-  }
-}
-$("refreshBarcodeConflictsBtn").onclick = refreshBarcodeConflicts;
 
 async function refreshBarcodeData() {
   if (currentUser?.id !== ADMIN_USER_ID) return;
@@ -6023,7 +6182,5 @@ boot()
   .catch((error) => {
     console.error("GCFR boot failed:", error);
   });
-
-
 
 
