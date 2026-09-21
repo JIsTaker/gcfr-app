@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#173f2b">
+  <meta name="gcfr-release" content="v1.70">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GCFR">
+  <title>GCFR</title>
+  <link rel="manifest" href="../../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../../icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="toast" class="toast hidden"></div>
+
+  <main id="authShell" class="auth-shell">
+    <section class="auth-card">
+      <div class="brand-block">
+        <div class="logo-mark">G</div>
+        <div>
+          <h1>GCFR</h1>
+          <p>Fresh Run</p>
+        </div>
+      </div>
+
+      <div id="authTabs" class="segmented">
+        <button id="loginTab" class="active">Login</button>
+        <button id="signupTab">Create account</button>
+      </div>
+
+      <form id="loginForm" class="stack">
+        <label>
+          User ID
+          <input id="loginUsername" autocomplete="username" required>
+        </label>
+        <label>
+          Password
+          <input id="loginPassword" type="password" autocomplete="current-password" required>
+        </label>
+
+        <label class="remember-login-row">
+          <input id="rememberLogin" type="checkbox" checked>
+          <span>
+            <strong>Remember login</strong>
+            <small>Keep me signed in on this device</small>
+          </span>
+        </label>
+
+        <button class="primary" type="submit">Login</button>
+        <button id="forgotPasswordBtn" class="text-button" type="button">Forgot password?</button>
+      </form>
+
+      <form id="signupForm" class="stack hidden">
+        <label>
+          User ID
+          <input id="signupUsername" autocomplete="username" minlength="3" maxlength="20" required>
+        </label>
+        <div class="two-col">
+          <label>
+            First Name
+            <input id="signupFirstName" autocomplete="given-name" required>
+          </label>
+          <label>
+            Last Name
+            <input id="signupLastName" autocomplete="family-name" required>
+          </label>
+        </div>
+        <div class="display-preview">Display name: <strong id="displayNamePreview">-</strong></div>
+        <label>
+          Email
+          <input id="signupEmail" type="email" autocomplete="email" required>
+        </label>
+        <label>
+          Password
+          <input id="signupPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label>
+          Confirm Password
+          <input id="signupConfirmPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <button class="primary" type="submit">Create account</button>
+      </form>
+
+      <form id="forgotForm" class="stack hidden">
+        <div>
+          <h2>Forgot password</h2>
+          <p class="muted">Enter your User ID. An administrator must approve the request before a reset email is sent.</p>
+        </div>
+        <label>
+          User ID
+          <input id="forgotUsername" required>
+        </label>
+        <button class="primary" type="submit">Request reset</button>
+        <button id="forgotBackBtn" class="secondary" type="button">Back</button>
+      </form>
+
+      <form id="recoveryForm" class="stack hidden">
+        <div>
+          <h2>Set new password</h2>
+          <p class="muted">Enter the new password for your GCFR account.</p>
+        </div>
+        <label>
+          New Password
+          <input id="recoveryPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label>
+          Confirm New Password
+          <input id="recoveryConfirmPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <button class="primary" type="submit">Save new password</button>
+      </form>
+
+      <p id="authStatus" class="status-text"></p>
+    </section>
+  </main>
+
+  <div id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">GCFR</div>
+        <h1 id="screenTitle">Scan</h1>
+      </div>
+      <div class="header-actions">
+        <span id="userDisplay" class="user-pill"></span>
+        <button id="installBtn" class="icon-button hidden" aria-label="Install app">＋</button>
+      </div>
+    </header>
+
+    <section id="screen-scan" class="screen active">
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2>Build Run List</h2>
+            <p class="muted">Scan, search, enter a code, or add manually. All items go into the same Run List.</p>
+          </div>
+          <span id="draftCount" class="count-badge">0</span>
+        </div>
+
+        <div class="product-search-block">
+          <label class="search-label" for="productSearch">Search products</label>
+          <input
+            id="productSearch"
+            class="search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="Search mango, avocado, banana or product code"
+          >
+          <div id="productSearchResults" class="search-results hidden"></div>
+        </div>
+
+        <div class="divider"><span>scan</span></div>
+
+        <div id="scannerWrap" class="scanner-wrap hidden">
+          <div id="reader"></div>
+          <div class="barcode-guide" aria-hidden="true"><span></span></div>
+          <div id="scanStatus" class="scan-status">Starting camera…</div>
+          <button id="stopScannerBtn" class="secondary full">Close camera</button>
+        </div>
+
+        <button id="scanBtn" class="scan-button">
+          <span class="scan-icon">▣</span>
+          Scan barcode
+        </button>
+
+        <div id="barcodeLinkPanel" class="barcode-link-panel hidden">
+          <div class="barcode-link-title">Barcode detected</div>
+          <div id="unknownBarcodeValue" class="barcode-value"></div>
+          <div id="barcodeLinkMessage" class="muted">
+            This barcode is not linked to a GCFR product yet.
+          </div>
+
+          <div id="barcodeAdminLinkTools" class="barcode-admin-link-tools hidden">
+            <input
+              id="barcodeLinkSearch"
+              type="search"
+              autocomplete="off"
+              placeholder="Search product to link this barcode"
+            >
+            <div id="barcodeLinkResults" class="search-results hidden"></div>
+
+            <div class="barcode-manual-register">
+              <div class="divider"><span>not in catalog?</span></div>
+              <form id="barcodeManualRegisterForm" class="barcode-manual-form">
+                <input
+                  id="barcodeManualProductCode"
+                  autocomplete="off"
+                  inputmode="numeric"
+                  maxlength="40"
+                  placeholder="Product Code"
+                  required
+                >
+                <input
+                  id="barcodeManualProductName"
+                  autocomplete="off"
+                  maxlength="160"
+                  placeholder="Product Name"
+                  required
+                >
+                <button id="barcodeManualRegisterBtn" type="submit" class="secondary full">
+                  Register Product & Link Barcode
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <button id="barcodeLinkCloseBtn" type="button" class="secondary full">
+            Close
+          </button>
+        </div>
+
+        <div class="divider"><span>or enter code</span></div>
+
+        <form id="manualCodeForm" class="inline-form">
+          <input id="manualCode" inputmode="numeric" autocomplete="off" placeholder="Enter product code">
+          <button class="secondary" type="submit">Add</button>
+        </form>
+
+        <div class="divider"><span>or manual item</span></div>
+
+        <form id="manualItemForm" class="inline-form">
+          <input
+            id="manualItemName"
+            autocomplete="off"
+            maxlength="120"
+            placeholder="No ticket / no barcode — type item name"
+            required
+          >
+          <button class="secondary" type="submit">Add</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="section-head">
+          <h2>Draft</h2>
+          <button id="clearDraftBtn" class="text-button danger" type="button">Clear</button>
+        </div>
+        <div id="draftList" class="list empty-state">No items yet.</div>
+        <button id="submitRunBtn" class="primary full" disabled>Submit Run List</button>
+      </div>
+    </section>
+
+    <section id="screen-runs" class="screen">
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2>Current Runs</h2>
+            <p class="muted">Tap Start to claim an item.</p>
+          </div>
+          <button id="refreshRunsBtn" class="icon-button" aria-label="Refresh">↻</button>
+        </div>
+
+        <div id="runDeleteTools" class="run-delete-tools hidden">
+          <button id="runBulkDeleteStartBtn" class="secondary" type="button">Select Delete</button>
+
+          <div id="runBulkDeleteActions" class="run-bulk-delete-actions hidden">
+            <label class="run-select-all">
+              <input id="runBulkSelectAll" type="checkbox">
+              <span>Select All</span>
+            </label>
+
+            <span id="runBulkDeleteCount" class="run-bulk-delete-count">0 selected</span>
+
+            <div class="run-bulk-delete-buttons">
+              <button id="runBulkDeleteCancelBtn" class="secondary" type="button">Cancel</button>
+              <button id="runBulkDeleteConfirmBtn" class="admin-danger" type="button" disabled>Delete Selected</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="runsList" class="runs-list"></div>
+      </div>
+    </section>
+
+    <section id="screen-history" class="screen">
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2>Run History</h2>
+            <p class="muted">History is kept. It cannot be deleted. Joey can restore items or runs that were removed from Current Runs.</p>
+          </div>
+          <button id="refreshHistoryBtn" class="icon-button" aria-label="Refresh">↻</button>
+        </div>
+
+        <div class="history-calendar">
+          <button id="historyPrevDayBtn" class="calendar-nav-btn" type="button" aria-label="Previous day">‹</button>
+          <label class="history-date-control" aria-label="History date">
+            <span id="historyDateDisplay">-</span>
+            <input id="historyDatePicker" type="date" aria-label="History date">
+          </label>
+          <button id="historyNextDayBtn" class="calendar-nav-btn" type="button" aria-label="Next day">›</button>
+        </div>
+
+        <button id="historyTodayBtn" class="text-button history-today-btn" type="button">Today</button>
+
+        <div class="history-filters">
+          <button class="history-filter active" data-history-filter="all">All</button>
+          <button class="history-filter" data-history-filter="completed">Completed</button>
+          <button class="history-filter" data-history-filter="deleted">Deleted</button>
+        </div>
+
+        <div id="historyList" class="runs-list"></div>
+      </div>
+    </section>
+
+    <section id="screen-checklist" class="screen">
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2>Daily Checklist</h2>
+            <p id="checklistDateLabel" class="muted"></p>
+          </div>
+        </div>
+
+        <div class="checklist-calendar">
+          <button id="checklistPrevDayBtn" class="calendar-nav-btn" type="button" aria-label="Previous day">‹</button>
+          <label class="checklist-date-control" aria-label="Checklist date">
+            <span id="checklistDateDisplay">-</span>
+            <input id="checklistDatePicker" type="date" aria-label="Checklist date">
+          </label>
+          <button id="checklistNextDayBtn" class="calendar-nav-btn" type="button" aria-label="Next day">›</button>
+        </div>
+
+        <button id="checklistTodayBtn" class="text-button checklist-today-btn" type="button">Today</button>
+
+        <button id="openQuickAddBtn" class="primary full quick-add-launch" type="button">Quick Add</button>
+
+        <div id="quickAddPanel" class="quick-add-panel hidden">
+          <div class="quick-step">
+            <div class="quick-step-title">Select items for each shift</div>
+
+            <div class="quick-checklist-matrix">
+              <div class="quick-matrix-header">
+                <div>Checklist</div>
+                <div>Morning</div>
+                <div>Afternoon</div>
+                <div>Evening</div>
+              </div>
+              <div id="quickTemplateList" class="quick-template-list"></div>
+            </div>
+          </div>
+
+          <div class="quick-add-actions">
+            <button id="quickAddCancelBtn" class="secondary" type="button">Cancel</button>
+            <button id="quickAddSelectedBtn" class="primary" type="button">Add Selected</button>
+          </div>
+        </div>
+
+        <div id="manualAddCard" class="manual-add-card">
+          <div class="manual-add-title">Manual Add</div>
+          <form id="addTaskForm" class="manual-task-form">
+            <select id="manualTaskPeriod" aria-label="Time period">
+              <option value="morning">Morning</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="evening">Evening</option>
+            </select>
+            <input id="newTaskTitle" placeholder="Add a task manually" maxlength="120" required>
+            <button class="secondary" type="submit">Add</button>
+          </form>
+        </div>
+
+        <div id="checklistDeleteTools" class="checklist-delete-tools hidden">
+          <button id="checklistBulkDeleteStartBtn" class="secondary checklist-bulk-start" type="button">Select Delete</button>
+          <div id="checklistBulkDeleteActions" class="checklist-bulk-actions hidden">
+            <label class="checklist-select-all">
+              <input id="checklistBulkSelectAll" type="checkbox">
+              <span>Select All</span>
+            </label>
+            <span id="checklistBulkDeleteCount" class="checklist-bulk-count">0 selected</span>
+            <button id="checklistBulkDeleteCancelBtn" class="secondary" type="button">Cancel</button>
+            <button id="checklistBulkDeleteConfirmBtn" class="admin-danger" type="button" disabled>Delete Selected</button>
+          </div>
+        </div>
+
+        <div id="checklistSections"></div>
+
+      </div>
+    </section>
+
+    <section id="screen-roster" class="screen">
+      <div class="card roster-card">
+        <div class="section-head">
+          <div>
+            <h2>Roster Scheduler</h2>
+            <p class="muted">Select a date to view the team schedule.</p>
+          </div>
+
+          <div class="roster-head-actions">
+            <div class="roster-view-mode-toggle" role="group" aria-label="Roster display mode">
+              <button id="rosterDailyViewBtn" class="secondary active" type="button">Daily</button>
+              <button id="rosterThisWeekBtn" class="secondary" type="button">This Week</button>
+            </div>
+            <button id="refreshRosterBtn" class="icon-button" type="button" aria-label="Refresh roster">↻</button>
+          </div>
+        </div>
+
+        <div class="roster-date-bar">
+          <button id="rosterPrevDayBtn" class="calendar-nav-btn" type="button" aria-label="Previous day">‹</button>
+
+          <div class="roster-calendar-shell">
+            <button
+              id="rosterDateButton"
+              class="roster-date-control"
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded="false"
+              aria-controls="rosterCalendarPanel"
+            >
+              <span id="rosterDateDisplay">-</span>
+              <span class="roster-calendar-caret" aria-hidden="true">▾</span>
+            </button>
+
+            <div
+              id="rosterCalendarPanel"
+              class="roster-calendar-panel hidden"
+              role="dialog"
+              aria-label="Roster calendar"
+            >
+              <div class="roster-calendar-head">
+                <button id="rosterCalendarPrevMonthBtn" class="icon-button" type="button" aria-label="Previous month">‹</button>
+                <strong id="rosterCalendarMonthLabel">-</strong>
+                <button id="rosterCalendarNextMonthBtn" class="icon-button" type="button" aria-label="Next month">›</button>
+              </div>
+
+              <div class="roster-calendar-weekdays" aria-hidden="true">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span>
+                <span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+
+              <div id="rosterCalendarGrid" class="roster-calendar-grid"></div>
+
+              <div class="roster-calendar-legend">
+                <span><i class="roster-legend-dot"></i> My shift</span>
+                <span><i class="roster-legend-week"></i> Current week</span>
+              </div>
+            </div>
+          </div>
+
+          <button id="rosterNextDayBtn" class="calendar-nav-btn" type="button" aria-label="Next day">›</button>
+        </div>
+
+        <div class="roster-top-actions">
+          <button id="rosterTodayBtn" class="text-button" type="button">Today</button>
+
+          <div class="roster-view-toggle" role="group" aria-label="Roster view">
+            <button id="rosterAllBtn" class="history-filter active" type="button">All Team</button>
+            <button id="rosterMineBtn" class="history-filter" type="button">My Roster</button>
+          </div>
+
+          <button id="rosterAddShiftBtn" class="primary hidden" type="button">Add Shift</button>
+        </div>
+
+        <div id="rosterShiftFormWrap" class="roster-shift-form-wrap hidden">
+          <form id="rosterShiftForm" class="roster-shift-form">
+            <input id="rosterShiftId" type="hidden">
+
+            <div class="roster-form-head">
+              <strong id="rosterFormTitle">Add Shift</strong>
+              <button id="rosterShiftCancelBtn" class="text-button" type="button">Close</button>
+            </div>
+
+            <div id="rosterShiftModeToggle" class="roster-shift-mode-toggle" role="group" aria-label="Shift entry mode">
+              <button id="rosterDailyModeBtn" class="history-filter active" type="button">Daily</button>
+              <button id="rosterWeeklyModeBtn" class="history-filter" type="button">Weekly</button>
+            </div>
+
+            <label>
+              <span>Team Member</span>
+              <select id="rosterShiftUser" required></select>
+            </label>
+
+            <div id="rosterDailyFields">
+              <div class="roster-time-grid">
+                <label>
+                  <span>Start</span>
+                  <input id="rosterShiftStart" type="time" value="07:00">
+                </label>
+
+                <label>
+                  <span>Finish</span>
+                  <input id="rosterShiftEnd" type="time" value="16:00">
+                </label>
+              </div>
+            </div>
+
+            <div id="rosterWeeklyFields" class="roster-weekly-fields hidden">
+              <div class="roster-weekly-head">
+                <strong id="rosterWeeklyRange">Week</strong>
+                <span class="muted">Select days and set each shift time.</span>
+              </div>
+
+              <div id="rosterWeeklyDays" class="roster-weekly-days"></div>
+            </div>
+
+            <label>
+              <span>Assignment</span>
+              <input
+                id="rosterShiftRole"
+                maxlength="80"
+                placeholder="Fresh Produce"
+                value="Fresh Produce"
+              >
+            </label>
+
+            <label>
+              <span>Notes</span>
+              <textarea
+                id="rosterShiftNotes"
+                rows="2"
+                maxlength="500"
+                placeholder="Optional notes"
+              ></textarea>
+            </label>
+
+            <div class="roster-form-actions">
+              <button id="rosterShiftDeleteBtn" class="admin-danger hidden" type="button">Delete Shift</button>
+              <button id="rosterShiftSaveBtn" class="primary" type="submit">Save Shift</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="rosterWeekOverview" class="roster-week-overview hidden">
+          <div class="roster-week-overview-head">
+            <div>
+              <strong id="rosterWeekOverviewTitle">This Week</strong>
+              <div id="rosterWeekOverviewRange" class="item-sub"></div>
+            </div>
+          </div>
+
+          <div id="rosterWeekOverviewGrid" class="roster-week-overview-grid"></div>
+        </div>
+
+        <div id="rosterScheduler" class="roster-scheduler">
+          <div class="empty-state">No shifts for this date.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-chat" class="screen">
+      <div class="card chat-card">
+        <div class="section-head chat-section-head">
+          <div>
+            <h2>Team Chat</h2>
+            <p class="muted">Fresh Produce team messages.</p>
+          </div>
+          <button id="refreshChatBtn" class="icon-button" type="button" aria-label="Refresh chat">↻</button>
+        </div>
+
+        <div id="chatMessages" class="chat-messages">
+          <div class="empty-state">No messages yet.</div>
+        </div>
+
+        <form id="chatForm" class="chat-compose">
+          <textarea
+            id="chatInput"
+            rows="1"
+            maxlength="2000"
+            placeholder="Message the team..."
+            aria-label="Chat message"
+          ></textarea>
+          <button id="chatSendBtn" class="primary chat-send-btn" type="submit">Send</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="screen-admin" class="screen">
+      <div id="adminHomeView">
+        <div class="card">
+          <div class="section-head">
+            <div>
+              <h2>Admin</h2>
+              <p class="muted">Select an admin tool.</p>
+            </div>
+          </div>
+
+          <div class="admin-menu-list">
+            <button id="openBarcodeDataManagerBtn" class="admin-menu-item" type="button">
+              <span class="admin-menu-copy">
+                <strong>Barcode / Product Data</strong>
+                <small>View, scan, add, correct or delete barcode links.</small>
+              </span>
+              <span class="admin-menu-arrow" aria-hidden="true">›</span>
+            </button>
+
+            <button id="openProcessPendingBtn" class="admin-menu-item" type="button">
+              <span class="admin-menu-copy">
+                <strong>Process Pending</strong>
+                <small>Review removals made by Troy J or Alex S before final deletion.</small>
+              </span>
+              <span class="admin-menu-right">
+                <b id="processPendingBadge" class="admin-menu-badge hidden">0</b>
+                <span class="admin-menu-arrow" aria-hidden="true">›</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2>Password Reset Requests</h2>
+            <p class="muted">Pending, email sent and completed requests are kept here until Joey deletes them.</p>
+          </div>
+          <button id="refreshAdminBtn" class="icon-button" aria-label="Refresh">↻</button>
+        </div>
+
+        <h3 class="subheading">Pending</h3>
+        <div id="adminPendingList" class="list"></div>
+
+        <h3 class="subheading">Email Sent</h3>
+        <div id="adminSentList" class="list"></div>
+
+        <h3 class="subheading">Completed</h3>
+        <div id="adminCompletedList" class="list"></div>
+      </div>
+
+      </div>
+
+      <div id="adminBarcodeDetailView" class="hidden">
+        <div class="card">
+          <div class="admin-detail-head">
+            <button id="adminBarcodeBackBtn" class="secondary admin-back-btn" type="button">‹ Back</button>
+            <div>
+              <h2>Barcode / Product Data</h2>
+              <p class="muted">Scan a barcode here to add or correct its saved link.</p>
+            </div>
+            <button id="refreshBarcodeDataBtn" class="icon-button" aria-label="Refresh barcode data">↻</button>
+          </div>
+
+          <div id="adminScannerWrap" class="scanner-wrap admin-scanner-overlay hidden">
+            <div id="adminReader"></div>
+            <div class="barcode-guide" aria-hidden="true"><span></span></div>
+            <div id="adminScanStatus" class="scan-status">Starting camera…</div>
+            <button id="adminStopScannerBtn" class="secondary full" type="button">Close camera</button>
+          </div>
+
+          <form id="adminBarcodeMappingForm" class="admin-barcode-form">
+            <input id="adminMappingOriginalBarcode" type="hidden">
+
+            <label>
+              <span>Barcode</span>
+              <div class="admin-barcode-input-row">
+                <input
+                  id="adminMappingBarcode"
+                  autocomplete="off"
+                  inputmode="numeric"
+                  maxlength="64"
+                  placeholder="Scanned barcode"
+                  required
+                >
+                <button id="adminScanBarcodeBtn" class="secondary" type="button">Scan</button>
+              </div>
+            </label>
+
+            <label>
+              <span>Type</span>
+              <select id="adminMappingBarcodeType">
+                <option value="ticket_barcode">Ticket Barcode</option>
+                <option value="product_code">Product Code</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Product Code</span>
+              <input
+                id="adminMappingProductCode"
+                autocomplete="off"
+                inputmode="numeric"
+                maxlength="40"
+                placeholder="Coles Product Code"
+                required
+              >
+            </label>
+
+            <label class="admin-barcode-name-field">
+              <span>Product Name</span>
+              <input
+                id="adminMappingProductName"
+                autocomplete="off"
+                maxlength="160"
+                placeholder="Product Name"
+                required
+              >
+            </label>
+
+            <div id="adminMappingModeText" class="admin-mapping-mode-text">New barcode mapping</div>
+
+            <div class="admin-barcode-form-actions">
+              <button id="adminMappingCancelBtn" type="button" class="secondary hidden">Cancel Edit</button>
+              <button id="adminMappingSaveBtn" type="submit" class="primary">Add Mapping</button>
+            </div>
+          </form>
+
+          <div class="product-search-block admin-barcode-search-block">
+            <label class="search-label" for="adminBarcodeDataSearch">Search saved data</label>
+            <input
+              id="adminBarcodeDataSearch"
+              class="search-input"
+              type="search"
+              autocomplete="off"
+              placeholder="Barcode, Product Code or Product Name"
+            >
+          </div>
+
+          <div id="adminBarcodeDataCount" class="item-sub"></div>
+          <div id="adminBarcodeDataList" class="admin-barcode-data-list"></div>
+        </div>
+      </div>
+      <div id="adminProcessPendingView" class="hidden">
+        <div class="card">
+          <div class="admin-detail-head">
+            <button id="processPendingBackBtn" class="secondary admin-back-btn" type="button">‹ Back</button>
+            <div>
+              <h2>Process Pending</h2>
+              <p class="muted">Troy J / Alex S removals wait here until Joey makes the final decision.</p>
+            </div>
+            <button id="refreshProcessPendingBtn" class="icon-button" aria-label="Refresh process pending">↻</button>
+          </div>
+
+          <div class="process-pending-summary">
+            <span id="processPendingCount">0 pending</span>
+          </div>
+
+          <div id="processPendingList" class="process-pending-list"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <section id="screen-account" class="screen">
+      <div class="card">
+        <h2>Account</h2>
+        <dl class="account-grid">
+          <dt>Name</dt><dd id="accountName">-</dd>
+          <dt>User ID</dt><dd id="accountUsername">-</dd>
+          <dt>Role</dt><dd id="accountRole">-</dd>
+          <dt>App Version</dt><dd id="accountAppVersion">1.70</dd>
+          <dt>Previous</dt><dd id="releasePrevious">-</dd>
+          <dt>Current</dt><dd id="releaseCurrent">-</dd>
+          <dt>Patching</dt><dd id="releasePatching">-</dd>
+          <dt>Release Status</dt><dd id="releaseStatus">-</dd>
+        </dl>
+      </div>
+
+      <div class="card">
+        <button id="logoutBtn" class="secondary full">Log out</button>
+      </div>
+    </section>
+
+    <nav class="bottom-nav">
+      <button data-screen="scan" class="active"><span>▣</span><small>Scan</small></button>
+      <button data-screen="runs"><span>≡</span><small>Runs</small></button>
+      <button data-screen="history"><span>↶</span><small>History</small></button>
+      <button data-screen="checklist"><span>✓</span><small>Checklist</small></button>
+      <button data-screen="roster"><span>▦</span><small>Roster</small></button>
+      <button id="chatNavBtn" data-screen="chat">
+        <span>◌</span><small>Chat</small><b id="chatNavBadge" class="nav-badge hidden">0</b>
+      </button>
+      <button id="adminNavBtn" data-screen="admin" class="hidden"><span>⚙</span><small>Admin</small><b id="adminBadge" class="nav-badge hidden">0</b></button>
+      <button data-screen="account"><span>●</span><small>ACC</small></button>
+    </nav>
+  </div>
+
+  <script src="../../release-client.js" defer></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
+
