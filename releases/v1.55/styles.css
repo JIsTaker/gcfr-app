@@ -1,0 +1,2977 @@
+:root {
+  --bg: #f3f5f3;
+  --card: #ffffff;
+  --ink: #111814;
+  --muted: #69726d;
+  --line: #dfe4e1;
+  --brand: #173f2b;
+  --brand-2: #245b40;
+  --soft: #e9f0eb;
+  --danger: #9b2c2c;
+  --warning: #8a5a00;
+  --radius: 18px;
+  --shadow: 0 8px 28px rgba(17, 24, 20, .07);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+button, input { font: inherit; }
+
+button { cursor: pointer; }
+
+.hidden { display: none !important; }
+
+.auth-shell {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(100%, 480px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.logo-mark {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--brand);
+  color: white;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.brand-block h1 { margin: 0; font-size: 28px; }
+.brand-block p { margin: 2px 0 0; color: var(--muted); }
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 5px;
+  background: #eef1ef;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  min-height: 42px;
+  font-weight: 800;
+}
+
+.segmented button.active {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.stack { display: grid; gap: 14px; }
+
+label {
+  display: grid;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+input {
+  min-height: 48px;
+  border: 1px solid #cdd4d0;
+  background: white;
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 0 14px;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--brand-2);
+  box-shadow: 0 0 0 3px rgba(36, 91, 64, .12);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.display-preview {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f0f3f1;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.primary, .secondary, .scan-button {
+  border: 0;
+  border-radius: 12px;
+  min-height: 48px;
+  padding: 0 16px;
+  font-weight: 850;
+}
+
+.primary {
+  background: var(--brand);
+  color: white;
+}
+
+.primary:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.secondary {
+  background: #e9eeeb;
+  color: var(--ink);
+}
+
+.text-button {
+  border: 0;
+  background: transparent;
+  min-height: 40px;
+  padding: 0;
+  color: var(--brand-2);
+  font-weight: 800;
+}
+
+.text-button.danger { color: var(--danger); }
+
+.full { width: 100%; }
+
+.status-text {
+  min-height: 22px;
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.app-shell {
+  min-height: 100svh;
+  padding-bottom: calc(82px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 76px;
+  background: rgba(243,245,243,.92);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(223,228,225,.85);
+}
+
+.eyebrow {
+  color: var(--brand-2);
+  font-weight: 900;
+  letter-spacing: .08em;
+  font-size: 11px;
+}
+
+.topbar h1 { margin: 2px 0 0; font-size: 23px; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-pill {
+  max-width: 125px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 11px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.icon-button {
+  border: 1px solid var(--line);
+  background: white;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 22px;
+}
+
+.screen {
+  display: none;
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 14px;
+}
+
+.screen.active { display: block; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 5px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.count-badge {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--brand);
+  color: white;
+  font-weight: 900;
+}
+
+.scan-button {
+  width: 100%;
+  min-height: 72px;
+  background: var(--brand);
+  color: white;
+  font-size: 18px;
+}
+
+.scan-icon { margin-right: 8px; }
+
+.scanner-wrap {
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 16px;
+  background: #0f1712;
+}
+
+#reader { width: 100%; overflow: hidden; border-radius: 12px; }
+#reader video { border-radius: 12px; }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 14px 0;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.empty-state {
+  color: var(--muted);
+  padding: 18px 0;
+  text-align: center;
+}
+
+.list-row, .run-item, .request-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.item-title { font-weight: 850; }
+.item-sub { color: var(--muted); font-size: 13px; margin-top: 3px; }
+
+.remove-btn {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: #f4eaea;
+  color: var(--danger);
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+.runs-list {
+  display: grid;
+  gap: 14px;
+}
+
+.run-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.run-head {
+  padding: 12px 14px;
+  background: #f0f4f1;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.run-head strong { font-size: 15px; }
+
+.run-items {
+  display: grid;
+  gap: 0;
+}
+
+.run-item {
+  border: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--line);
+}
+
+.run-item:first-child { border-top: 0; }
+
+.status-line {
+  margin-top: 7px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status-pending { color: #6a6d6b; }
+.status-processing { color: var(--warning); }
+.status-done { color: var(--brand-2); }
+.status-out_of_stock { color: var(--danger); }
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.action-row button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-weight: 800;
+  background: #e9eeeb;
+}
+
+.action-row .done { background: #e4f1e8; color: var(--brand-2); }
+.action-row .oos { background: #f6e7e7; color: var(--danger); }
+
+.check-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+}
+
+.check-row.done .item-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.request-card .primary { margin-top: 10px; width: 100%; }
+
+.account-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.account-grid dt { color: var(--muted); }
+.account-grid dd { margin: 0; font-weight: 850; }
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  min-height: calc(68px + env(safe-area-inset-bottom));
+  padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-around;
+}
+
+.bottom-nav button {
+  position: relative;
+  flex: 1;
+  max-width: 110px;
+  border: 0;
+  background: transparent;
+  color: #768079;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 54px;
+  border-radius: 12px;
+}
+
+.bottom-nav button span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.bottom-nav button small {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bottom-nav button.active {
+  color: var(--brand);
+  background: var(--soft);
+}
+
+.nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 18%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.toast {
+  position: fixed;
+  z-index: 100;
+  left: 50%;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(calc(100% - 28px), 500px);
+  background: #111814;
+  color: white;
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  font-weight: 750;
+}
+
+@media (max-width: 430px) {
+  .two-col { grid-template-columns: 1fr; }
+  .auth-shell { padding: 14px; }
+  .auth-card { padding: 18px; }
+}
+
+.product-search-block {
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.search-label {
+  margin-bottom: 7px;
+}
+
+.search-input {
+  width: 100%;
+  min-height: 52px;
+  font-size: 16px;
+}
+
+.search-results {
+  margin-top: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+}
+
+.search-result-item {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: white;
+  text-align: left;
+  padding: 12px 14px;
+  display: block;
+}
+
+.search-result-item:first-child {
+  border-top: 0;
+}
+
+.search-result-item:active {
+  background: var(--soft);
+}
+
+.search-result-name {
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.search-result-code {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.search-result-empty {
+  padding: 14px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 14px;
+}
+
+
+.manual-load-shortcut {
+  margin-top: 10px;
+}
+
+.admin-danger {
+  background: #f6e7e7 !important;
+  color: var(--danger) !important;
+}
+
+.admin-reset {
+  background: #fff3d9 !important;
+  color: #7a5200 !important;
+}
+
+.run-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.run-admin-actions button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.manual-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f0f3f1;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bottom-nav button small {
+  font-size: 10px;
+}
+
+@media (max-width: 520px) {
+  .bottom-nav {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .bottom-nav button {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .bottom-nav button span {
+    font-size: 18px;
+  }
+
+  .bottom-nav button small {
+    font-size: 9px;
+  }
+}
+
+
+.manual-draft-summary {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 46px;
+  border: 1px dashed #9eaaa3;
+  background: #f8faf8;
+  border-radius: 12px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.manual-draft-summary strong {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: white;
+  display: grid;
+  place-items: center;
+}
+
+.history-filters {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+
+.history-filter {
+  border: 1px solid var(--line);
+  background: white;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.history-filter.active {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+}
+
+.deleted-card {
+  border-color: #dababa;
+  background: #fffafa;
+}
+
+.deleted-item {
+  opacity: .72;
+  background: #fff7f7;
+}
+
+.deleted-label,
+.request-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 900;
+  margin-top: 5px;
+}
+
+.deleted-label {
+  background: #f4dddd;
+  color: var(--danger);
+}
+
+.request-status.pending {
+  background: #fff2d2;
+  color: #765000;
+}
+
+.request-status.sent {
+  background: #e4edf8;
+  color: #315a84;
+}
+
+.request-status.completed {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+.request-meta {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.subheading {
+  margin: 20px 0 8px;
+  font-size: 15px;
+}
+
+.subheading:first-of-type {
+  margin-top: 4px;
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.request-actions button {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 850;
+}
+
+.bottom-nav {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.bottom-nav button {
+  flex: 0 0 72px;
+}
+
+
+.checklist-calendar {
+  display: grid;
+  grid-template-columns: 46px 1fr 46px;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0 0;
+}
+
+.checklist-calendar input[type="date"] {
+  width: 100%;
+  min-height: 46px;
+  text-align: center;
+  font-weight: 850;
+}
+
+.calendar-nav-btn {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.checklist-today-btn {
+  width: 100%;
+  text-align: center;
+  margin: 2px 0 10px;
+}
+
+.checklist-day-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 900;
+  margin-top: 5px;
+}
+
+.checklist-delete-btn {
+  min-width: 72px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: #f6e7e7;
+  color: var(--danger);
+  font-weight: 850;
+}
+
+
+.quick-add-launch {
+  margin: 4px 0 10px;
+}
+
+.quick-add-panel {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 0 0 14px;
+  background: #f8faf8;
+}
+
+.quick-step + .quick-step {
+  margin-top: 16px;
+}
+
+.quick-step-title,
+.manual-add-title {
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 9px;
+}
+
+.period-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.period-buttons button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.period-buttons button.active {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+}
+
+.quick-template-list {
+  display: grid;
+  gap: 7px;
+}
+
+.quick-template-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  font-weight: 750;
+}
+
+.quick-template-option input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+}
+
+.quick-add-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.manual-add-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin-bottom: 14px;
+  background: white;
+}
+
+.manual-task-form {
+  display: grid;
+  grid-template-columns: 118px 1fr auto;
+  gap: 8px;
+}
+
+.manual-task-form select {
+  min-height: 48px;
+  border: 1px solid #cdd4d0;
+  border-radius: 12px;
+  background: white;
+  padding: 0 10px;
+  font-weight: 800;
+}
+
+.checklist-period-section {
+  margin: 14px 0 18px;
+}
+
+.checklist-period-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.checklist-period-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.checklist-period-count {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #eef2ef;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.checklist-period-list {
+  display: grid;
+  gap: 8px;
+}
+
+.carried-row {
+  border-color: #e5baba;
+  background: #fff7f7;
+}
+
+.carried-row .item-title {
+  text-decoration: line-through;
+  color: #b12d2d;
+}
+
+.carried-x {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: #f4dddd;
+  color: #b12d2d;
+  font-weight: 950;
+  font-size: 15px;
+}
+
+.carried-next-label {
+  margin-top: 4px;
+  color: #b12d2d;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.carried-from-label {
+  margin-top: 4px;
+  color: var(--brand-2);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+@media (max-width: 520px) {
+  .manual-task-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.draft-run-row {
+  align-items: center;
+}
+
+.draft-item-main {
+  min-width: 0;
+}
+
+.draft-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gap-check-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.gap-check-toggle input {
+  width: 19px;
+  height: 19px;
+  min-height: 0;
+  margin: 0;
+}
+
+.run-gap-check {
+  margin-top: 8px;
+}
+
+.gap-check-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-top: 5px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #fff1cf;
+  color: #765000;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.cancel-action {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+.status-cancelled {
+  color: var(--danger);
+}
+
+@media (max-width: 560px) {
+  .draft-run-row {
+    align-items: flex-start;
+  }
+
+  .draft-item-controls {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
+
+
+.checklist-period-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.next-shift-btn {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  color: var(--brand);
+  padding: 0 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.next-shift-btn:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+
+.completion-request-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.complete-request-btn,
+.cancel-request-btn,
+.approve-request-btn,
+.reject-request-btn {
+  min-height: 36px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.complete-request-btn {
+  background: #e4edf8;
+  color: #315a84;
+}
+
+.cancel-request-btn,
+.reject-request-btn {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+.approve-request-btn {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+.completion-request-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.completion-request-badge.pending {
+  background: #fff2d2;
+  color: #765000;
+}
+
+.completion-request-badge.rejected {
+  background: #f4dddd;
+  color: var(--danger);
+}
+
+
+.checklist-comments {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.checklist-comments-title {
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.checklist-comment-thread {
+  display: grid;
+  gap: 7px;
+}
+
+.checklist-comment {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f5f7f5;
+}
+
+.checklist-comment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.checklist-comment-body {
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.checklist-comment-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.checklist-comment-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.checklist-comment-form input {
+  min-height: 40px;
+}
+
+.checklist-comment-form button {
+  min-width: 64px;
+}
+
+@media (max-width: 480px) {
+  .checklist-comment-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+}
+
+
+.shift-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.request-edit-btn {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: white;
+  color: #315a84;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.shift-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.shift-status-badge.closed {
+  background: #e8ece9;
+  color: var(--muted);
+}
+
+.shift-status-badge.requested {
+  background: #fff2d2;
+  color: #765000;
+}
+
+.shift-status-badge.editing {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+
+.checklist-comment-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comment-edited-label {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e8ece9;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.checklist-comment-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.comment-edit-btn,
+.comment-delete-btn,
+.comment-edit-cancel-btn {
+  min-height: 32px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.comment-edit-btn {
+  background: #e4edf8;
+  color: #315a84;
+}
+
+.comment-delete-btn,
+.comment-edit-cancel-btn {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+.checklist-comment-edit-form {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.checklist-comment-edit-form input {
+  min-height: 36px;
+}
+
+@media (max-width: 520px) {
+  .checklist-comment-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-comment-meta-right {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+
+.edit-selection-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 9px;
+  background: #e4edf8;
+  color: #315a84;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.edit-request-select {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+}
+
+.edit-request-item {
+  outline: 1px solid #b9cce1;
+  outline-offset: -1px;
+}
+
+.edit-request-item-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  margin-top: 5px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #fff2d2;
+  color: #765000;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.edit-request-item-label.approved {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+
+.edit-request-item-label.pending-move {
+  background: #fff2d2;
+  color: #765000;
+}
+
+
+.move-request-selectable {
+  margin-top: 5px;
+  color: #315a84;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.move-request-unavailable {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.edit-request-select:disabled {
+  opacity: .35;
+}
+
+
+.cancel-carry-selectable {
+  margin-top: 5px;
+  color: #9a5a00;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.edit-request-item-label.cancel-carry {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+
+.quick-checklist-matrix {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+
+.quick-matrix-header,
+.quick-template-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 82px 92px 82px;
+  min-width: 430px;
+  align-items: center;
+}
+
+.quick-matrix-header {
+  min-height: 42px;
+  background: #f3f6f4;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.quick-matrix-header > div:first-child {
+  text-align: left;
+  padding-left: 12px;
+}
+
+.quick-template-row {
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+}
+
+.quick-template-row:last-child {
+  border-bottom: 0;
+}
+
+.quick-template-name {
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.quick-template-cell {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  cursor: pointer;
+}
+
+.quick-template-cell input {
+  width: 21px;
+  height: 21px;
+  min-height: 0;
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  .quick-checklist-matrix {
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+}
+
+
+/* V1.27 mobile/PWA hardening */
+html {
+  min-height: 100%;
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  touch-action: manipulation;
+}
+
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button {
+  min-width: 44px;
+}
+
+.topbar {
+  padding-top: max(14px, env(safe-area-inset-top));
+}
+
+.screen {
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+
+.bottom-nav {
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+}
+
+#reader video,
+#reader canvas {
+  max-width: 100% !important;
+  border-radius: 14px;
+}
+
+@media (max-width: 430px) {
+  .topbar {
+    min-height: 68px;
+    padding-bottom: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 21px;
+  }
+
+  .user-pill {
+    max-width: 92px;
+  }
+
+  .screen {
+    padding-top: 10px;
+    padding-bottom: 18px;
+  }
+
+  .card {
+    border-radius: 15px;
+    padding: 13px;
+  }
+
+  .primary,
+  .secondary,
+  .scan-button,
+  input {
+    min-height: 46px;
+  }
+}
+
+
+/* ============================================================
+   V1.28 — Login memory
+   ============================================================ */
+.remember-login-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.remember-login-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: var(--brand);
+}
+
+.remember-login-row span {
+  display: grid;
+  gap: 2px;
+}
+
+.remember-login-row strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.remember-login-row small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+
+/* ============================================================
+   V1.28 — iPhone / small-phone layout
+   ============================================================ */
+
+/* Prevent iOS Safari zooming into form controls. */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* Apple-style minimum usable touch target. */
+button,
+.icon-button,
+.calendar-nav-btn,
+.bottom-nav button {
+  min-height: 44px;
+}
+
+/* Long button text must stay inside the button instead of widening it. */
+button {
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.15;
+}
+
+/* Do not allow flex/grid children to force the screen wider than the viewport. */
+.card,
+.list-row,
+.run-item,
+.request-card,
+.action-row,
+.shift-action-group,
+.quick-add-actions,
+.checklist-comment-form {
+  min-width: 0;
+}
+
+.topbar {
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+
+.header-actions {
+  min-width: 0;
+}
+
+.user-pill {
+  min-width: 0;
+}
+
+/* Fit all bottom-navigation buttons on an iPhone instead of horizontal scrolling. */
+@media (max-width: 520px) {
+  .app-shell {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav {
+    overflow-x: hidden;
+    justify-content: stretch;
+    gap: 1px;
+    padding-top: 5px;
+    padding-bottom: calc(5px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav button {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    max-width: none;
+    min-height: 54px;
+    padding: 3px 2px;
+    border-radius: 10px;
+  }
+
+  .bottom-nav button span {
+    font-size: 18px;
+  }
+
+  .bottom-nav button small {
+    max-width: 100%;
+    font-size: 9px;
+    line-height: 1.05;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-badge {
+    right: 8%;
+    top: 0;
+  }
+
+  .toast {
+    width: calc(100% - 24px);
+    max-width: 420px;
+  }
+
+  .action-row,
+  .run-admin-actions,
+  .request-actions,
+  .shift-action-group,
+  .quick-add-actions {
+    gap: 6px;
+  }
+
+  .action-row button,
+  .run-admin-actions button,
+  .request-actions button,
+  .shift-action-group button,
+  .quick-add-actions button {
+    min-height: 44px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .checklist-comment-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .checklist-comment-form input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .checklist-comment-form button {
+    min-width: 58px;
+    min-height: 44px;
+  }
+
+  /* Quick Add remains a 3-column time matrix but now fits normal iPhones. */
+  .quick-matrix-header,
+  .quick-template-row {
+    grid-template-columns: minmax(105px, 1fr) 64px 70px 64px;
+    min-width: 0;
+  }
+
+  .quick-matrix-header {
+    font-size: 9px;
+  }
+
+  .quick-matrix-header > div {
+    overflow-wrap: anywhere;
+  }
+
+  .quick-template-name {
+    padding: 8px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .quick-template-cell input {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 430px) {
+  .topbar {
+    min-height: 62px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: 8px;
+  }
+
+  .topbar h1 {
+    font-size: 19px;
+  }
+
+  .eyebrow {
+    font-size: 9px;
+  }
+
+  .header-actions {
+    gap: 5px;
+  }
+
+  .user-pill {
+    max-width: 76px;
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  .icon-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+  }
+
+  .screen {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  .card h2 {
+    font-size: 17px;
+  }
+
+  .primary,
+  .secondary,
+  .scan-button {
+    min-height: 46px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .two-col {
+    gap: 8px;
+  }
+
+  .account-grid {
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 9px;
+    font-size: 13px;
+  }
+
+  .checklist-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 6px;
+  }
+
+  .calendar-nav-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* iPhone SE / very narrow devices */
+@media (max-width: 360px) {
+  .screen {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .card {
+    padding: 10px;
+  }
+
+  .topbar {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  .user-pill {
+    max-width: 62px;
+  }
+
+  .bottom-nav button small {
+    font-size: 8px;
+  }
+
+  .quick-matrix-header,
+  .quick-template-row {
+    grid-template-columns: minmax(88px, 1fr) 56px 62px 56px;
+  }
+
+  .quick-template-name {
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 11px;
+  }
+
+  .quick-matrix-header {
+    font-size: 8px;
+  }
+
+  .action-row button {
+    flex: 1 1 calc(50% - 4px);
+  }
+}
+
+
+/* ============================================================
+   V1.29 — Barcode scanner
+   ============================================================ */
+.scanner-wrap {
+  display: grid;
+  gap: 9px;
+}
+
+#reader {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #111;
+}
+
+#reader video {
+  width: 100% !important;
+  max-height: 58dvh;
+  object-fit: cover;
+}
+
+#reader__dashboard_section_csr button,
+#reader button {
+  min-height: 44px;
+}
+
+.scan-status {
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.barcode-link-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.barcode-link-title {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.barcode-value {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #f3f6f4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 850;
+  word-break: break-all;
+}
+
+.barcode-admin-link-tools {
+  display: grid;
+  gap: 8px;
+}
+
+.barcode-link-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.barcode-link-result > div {
+  min-width: 0;
+}
+
+.barcode-link-result strong {
+  flex: 0 0 auto;
+  color: var(--brand);
+}
+
+@media (max-width: 430px) {
+  #reader video {
+    max-height: 48dvh;
+  }
+
+  .barcode-link-panel {
+    padding: 12px;
+  }
+}
+
+
+/* Full-screen scanner. Keep the full video frame visible for decoding. */
+body.scanner-open { overflow: hidden; }
+body.scanner-open #appShell { visibility: hidden; }
+body.scanner-open #toast { z-index: 10002; }
+#scannerWrap:not(.hidden) {
+  position: fixed; inset: 0; z-index: 10000;
+  width: 100%; height: 100%; height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0; padding: 0; background: #000; color: #fff;
+  overscroll-behavior: contain;
+}
+#scannerWrap.hidden { display: none !important; }
+#scannerWrap #reader { width: 100%; border: 0 !important; border-radius: 0; background: #000; }
+#scannerWrap #reader video {
+  display: block; width: 100% !important; height: auto !important;
+  max-height: 100dvh; object-fit: contain;
+}
+#scannerWrap .scan-status {
+  position: absolute; bottom: max(24px, env(safe-area-inset-bottom));
+  left: 16px; right: 16px; padding: 12px;
+  color: #fff; background: rgba(0,0,0,.7); border-radius: 10px;
+  pointer-events: none; font-size: 14px;
+}
+#scannerWrap #stopScannerBtn {
+  position: absolute; top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right)); width: auto;
+  min-height: 44px; padding: 10px 18px;
+  border: 1px solid #fff; color: #fff; background: rgba(0,0,0,.75);
+}
+
+
+/* v1.31: visible guide, independent of the image sent to the decoder. */
+#scannerWrap #reader { position: absolute; inset: 0; width: 100%; height: 100%; }
+#scannerWrap #reader video { width: 100% !important; height: 100% !important; max-height: none; object-fit: cover; }
+#scannerWrap .barcode-guide {
+  position: absolute; left: 8%; right: 8%; top: 50%; transform: translateY(-50%);
+  height: clamp(100px, 24dvh, 180px); border: 2px solid rgba(255,255,255,.9);
+  border-radius: 12px; pointer-events: none;
+}
+#scannerWrap .barcode-guide span {
+  position: absolute; left: 8px; right: 8px; top: 50%; height: 2px;
+  background: #ff3b30; box-shadow: 0 0 8px rgba(255,59,48,.8);
+}
+
+
+/* ============================================================
+   V1.33 — iPhone layout fixes
+   ============================================================ */
+
+/* Keep inline Add forms inside the card on narrow iPhones. */
+.inline-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+
+.inline-form input {
+  width: 100%;
+  min-width: 0;
+}
+
+.inline-form button {
+  justify-self: stretch;
+  min-width: 88px;
+}
+
+/* Also keep the checklist manual-add row from expanding horizontally. */
+.manual-task-form,
+.checklist-calendar {
+  min-width: 0;
+}
+
+.manual-task-form input,
+.checklist-calendar input[type="date"] {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Allow the long date label + Today badge to wrap instead of colliding. */
+#checklistDateLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  line-height: 1.25;
+}
+
+#checklistDateLabel .checklist-day-badge {
+  margin-top: 0;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 430px) {
+  .inline-form {
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 8px;
+  }
+
+  .inline-form button {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  #checklistDateLabel {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 360px) {
+  .inline-form {
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 7px;
+  }
+}
+
+
+/* ============================================================
+   V1.34 — Checklist delete tools + date collision fix
+   ============================================================ */
+
+.checklist-calendar {
+  width: 100%;
+  grid-template-columns: 46px minmax(0, 1fr) 46px;
+  overflow: hidden;
+}
+
+.checklist-calendar > * {
+  min-width: 0;
+}
+
+.checklist-calendar input[type="date"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding-left: 6px;
+  padding-right: 6px;
+  overflow: hidden;
+}
+
+.calendar-nav-btn {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.checklist-delete-tools {
+  margin: 4px 0 14px;
+}
+
+.checklist-bulk-start {
+  width: 100%;
+  min-height: 44px;
+}
+
+.checklist-bulk-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.checklist-bulk-count {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.checklist-bulk-actions button {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 850;
+}
+
+.checklist-bulk-actions button:disabled {
+  opacity: .45;
+}
+
+.checklist-bulk-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 1px solid #dfbcbc;
+  border-radius: 10px;
+  background: #fff7f7;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checklist-bulk-select input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--danger);
+}
+
+.check-row.bulk-delete-selected {
+  border-color: #c55252;
+  background: #fff7f7;
+  box-shadow: inset 0 0 0 1px rgba(197,82,82,.16);
+}
+
+@media (max-width: 430px) {
+  .checklist-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 6px;
+  }
+
+  .checklist-calendar input[type="date"] {
+    font-size: 15px;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .checklist-bulk-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .checklist-bulk-count {
+    grid-column: 1 / -1;
+  }
+
+  .checklist-bulk-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .checklist-bulk-select span {
+    display: none;
+  }
+
+  .checklist-bulk-select {
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+
+/* ============================================================
+   V1.35 — Native iOS date control isolation + delete visibility
+   ============================================================ */
+
+/* The native iOS date input can visually overflow its grid cell.  Render the
+   date ourselves and keep the real date input transparent inside the centre
+   cell, so it can still open the native picker without touching the arrows. */
+.checklist-calendar {
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 10px;
+  overflow: visible;
+}
+
+.checklist-date-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid #cdd4d0;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#checklistDateDisplay {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0 10px;
+  text-align: center;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.checklist-date-control input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.checklist-date-control input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.calendar-nav-btn {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  flex: 0 0 48px;
+  z-index: 3;
+}
+
+/* Bulk-delete controls are hidden by JS whenever the selected date has zero
+   checklist items. Keep hidden authoritative even if older rules set display. */
+.checklist-delete-tools.hidden,
+.checklist-bulk-start.hidden,
+.checklist-bulk-actions.hidden {
+  display: none !important;
+}
+
+@media (max-width: 430px) {
+  .checklist-calendar {
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+    gap: 10px;
+  }
+
+  .calendar-nav-btn {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    flex-basis: 46px;
+  }
+
+  .checklist-date-control {
+    min-height: 46px;
+  }
+
+  #checklistDateDisplay {
+    font-size: 16px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .checklist-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+
+  .calendar-nav-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    flex-basis: 44px;
+  }
+
+  #checklistDateDisplay {
+    font-size: 15px;
+  }
+}
+
+
+
+
+/* ============================================================
+   V1.48 — History date navigation
+   ============================================================ */
+.history-calendar {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.history-date-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid #cdd4d0;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#historyDateDisplay {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0 10px;
+  text-align: center;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.history-date-control input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.history-date-control input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.history-today-btn {
+  display: block;
+  margin: 0 auto 12px;
+}
+
+@media (max-width: 430px) {
+  .history-calendar {
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+  }
+
+  .history-date-control {
+    min-height: 46px;
+  }
+
+  #historyDateDisplay {
+    font-size: 16px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .history-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+
+  #historyDateDisplay {
+    font-size: 15px;
+  }
+}
+
+
+/* ============================================================
+   V1.49 — Run bulk delete + complete ranked product search
+   ============================================================ */
+.run-delete-tools {
+  margin: 0 0 14px;
+}
+
+.run-delete-tools > .secondary {
+  width: 100%;
+}
+
+.run-bulk-delete-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f7f9f7;
+}
+
+.run-select-all,
+.run-bulk-select-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.run-select-all input,
+.run-bulk-select-box input {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.run-bulk-delete-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.run-bulk-delete-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.run-head-info {
+  min-width: 0;
+}
+
+.run-bulk-select-box {
+  margin-bottom: 8px;
+  color: var(--brand);
+  font-size: 13px;
+}
+
+.search-result-count {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f9f7;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.search-results {
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 560px) {
+  .run-bulk-delete-actions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .run-select-all {
+    grid-column: 1;
+  }
+
+  .run-bulk-delete-count {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  .run-bulk-delete-buttons {
+    grid-column: 1 / -1;
+  }
+
+  .run-bulk-delete-buttons button {
+    flex: 1 1 0;
+  }
+}
+
+
+/* ============================================================
+   V1.50 — Checklist Select All
+   ============================================================ */
+.checklist-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 850;
+  color: var(--brand);
+  cursor: pointer;
+}
+
+.checklist-select-all input {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+@media (max-width: 560px) {
+  .checklist-bulk-actions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .checklist-select-all {
+    grid-column: 1;
+  }
+
+  .checklist-bulk-count {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  #checklistBulkDeleteCancelBtn,
+  #checklistBulkDeleteConfirmBtn {
+    width: 100%;
+  }
+
+  #checklistBulkDeleteCancelBtn {
+    grid-column: 1;
+  }
+
+  #checklistBulkDeleteConfirmBtn {
+    grid-column: 2;
+  }
+}
+
+
+/* ============================================================
+   V1.53 — Barcode/Product Data Manager
+   ============================================================ */
+.barcode-manual-register {
+  margin-top: 12px;
+}
+
+.barcode-manual-form {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-barcode-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f7f9f7;
+}
+
+.admin-barcode-form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-barcode-form label > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.admin-barcode-name-field {
+  grid-column: 1 / -1;
+}
+
+.admin-barcode-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.admin-barcode-search-block {
+  margin-top: 4px;
+}
+
+.admin-barcode-data-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.admin-barcode-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-barcode-row-info {
+  min-width: 0;
+}
+
+.admin-barcode-value {
+  margin-bottom: 4px;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.admin-barcode-row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .admin-barcode-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-barcode-name-field,
+  .admin-barcode-form-actions {
+    grid-column: 1;
+  }
+
+  .admin-barcode-form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-barcode-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-barcode-row-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-barcode-row-actions button {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   V1.54 — Admin tool navigation + in-place barcode scanner
+   ============================================================ */
+.admin-menu-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+}
+
+.admin-menu-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-menu-copy strong {
+  font-size: 16px;
+}
+
+.admin-menu-copy small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.admin-menu-arrow {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.admin-detail-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.admin-detail-head h2 {
+  margin-top: 0;
+}
+
+.admin-back-btn {
+  min-width: 78px;
+}
+
+.admin-inline-scanner {
+  margin-bottom: 14px;
+}
+
+.admin-barcode-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-barcode-input-row input {
+  min-width: 0;
+}
+
+.admin-mapping-mode-text {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-barcode-row {
+  cursor: pointer;
+}
+
+.admin-barcode-row:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+#adminScannerWrap {
+  margin-bottom: 10px;
+}
+
+#adminReader video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 560px) {
+  .admin-detail-head {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .admin-detail-head h2 {
+    font-size: 20px;
+  }
+
+  .admin-back-btn {
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .admin-barcode-input-row {
+    grid-template-columns: minmax(0, 1fr) 82px;
+  }
+}
+
+
+/* ============================================================
+   V1.55 — delegated daily managers + Process Pending
+   ============================================================ */
+.admin-menu-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-menu-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-menu-badge {
+  min-width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.history-removed-by {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--danger);
+}
+
+.checklist-removal-pending {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff3cd;
+  color: #6a4b00;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.process-pending-summary {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.process-pending-list {
+  display: grid;
+  gap: 12px;
+}
+
+.process-pending-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.process-pending-type {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1f3f2;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.process-pending-requester {
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.process-pending-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .process-pending-card {
+    grid-template-columns: 1fr;
+  }
+
+  .process-pending-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .process-pending-actions button {
+    width: 100%;
+  }
+}
