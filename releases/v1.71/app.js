@@ -261,7 +261,6 @@ async function enterApp() {
 }
 
 async function leaveApp() {
-  closeRunBarcodeLookup();
   stopScanner();
   stopAdminBarcodeScanner();
   realtimeChannels.forEach((channel) => supabase.removeChannel(channel));
@@ -2038,12 +2037,25 @@ async function addCodeToDraft(code) {
     .maybeSingle();
 
   if (error) throw error;
+
   if (!data) {
-    showToast(`Product ${clean} was not found.`);
+    if (canManageDailyOperations()) {
+      openManualProductRegistration(clean);
+      return;
+    }
+
+    showToast(`Product ${clean} is not in the database. Add it as a manual item below.`);
     return;
   }
 
-  draft.push(data);
+  closeManualProductRegistration();
+
+  draft.push({
+    code: data.code,
+    name: data.name,
+    gap_check_required: false,
+  });
+
   saveDraft();
   renderDraft();
   showToast(`${data.name} added.`);
@@ -2058,6 +2070,95 @@ $("manualCodeForm").addEventListener("submit", async (event) => {
     showToast(error.message);
   }
 });
+
+
+function openManualProductRegistration(productCode) {
+  const panel = $("manualProductRegisterPanel");
+  if (!panel) return;
+
+  $("manualProductRegisterCode").value = String(productCode || "").trim();
+  $("manualProductRegisterName").value = "";
+  panel.classList.remove("hidden");
+
+  requestAnimationFrame(() => {
+    $("manualProductRegisterName")?.focus();
+  });
+}
+
+function closeManualProductRegistration() {
+  $("manualProductRegisterPanel")?.classList.add("hidden");
+
+  if ($("manualProductRegisterCode")) {
+    $("manualProductRegisterCode").value = "";
+  }
+
+  if ($("manualProductRegisterName")) {
+    $("manualProductRegisterName").value = "";
+  }
+}
+
+$("manualProductRegisterCloseBtn").onclick = closeManualProductRegistration;
+
+$("manualProductRegisterForm").onsubmit = async (event) => {
+  event.preventDefault();
+
+  if (!canManageDailyOperations()) {
+    showToast("You do not have permission to register catalog products.");
+    return;
+  }
+
+  const productCode = $("manualProductRegisterCode").value.trim();
+  const productName = $("manualProductRegisterName").value.trim();
+
+  if (!productCode || !productName) {
+    showToast("Enter Product Code and Product Name.");
+    return;
+  }
+
+  if (draft.some((item) => item.code === productCode)) {
+    closeManualProductRegistration();
+    showToast("Already in the draft.");
+    return;
+  }
+
+  const button = $("manualProductRegisterBtn");
+  button.disabled = true;
+  button.textContent = "Registering...";
+
+  const { data, error } = await supabase.rpc(
+    "register_manual_product_for_run",
+    {
+      _product_code: productCode,
+      _product_name: productName,
+    },
+  );
+
+  button.disabled = false;
+  button.textContent = "Register & Add";
+
+  if (error) {
+    showToast(error.message);
+    return;
+  }
+
+  const product = Array.isArray(data) && data.length
+    ? data[0]
+    : { code: productCode, name: productName };
+
+  productSearchCatalog = null;
+
+  draft.push({
+    code: product.code || productCode,
+    name: product.name || productName,
+    gap_check_required: false,
+  });
+
+  saveDraft();
+  renderDraft();
+  closeManualProductRegistration();
+
+  showToast(`${product.name || productName} registered and added.`);
+};
 
 
 // ---------- PRODUCT SEARCH ----------
@@ -2865,132 +2966,6 @@ $("runBulkDeleteConfirmBtn").onclick = async () => {
 };
 
 
-// ---------- RUN TICKET BARCODE LOOKUP ----------
-let runBarcodeLookupRequest = 0;
-let runBarcodeLookupContext = null;
-let runBarcodeLookupScroll = null;
-let runBarcodeLookupOpener = null;
-
-function ticketBarcodeSvg(barcode) {
-  // Encode only the explicitly stored value. Never add/remove a digit or derive
-  // a Ticket Barcode from the product code.
-  if (!/^\d{7,8}$/.test(barcode)) throw new Error("Invalid saved ticket barcode.");
-  const left = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"];
-  const ean8 = barcode.length === 8 &&
-    (10 - [...barcode.slice(0, 7)].reduce((sum, digit, i) => sum + Number(digit) * (i % 2 ? 1 : 3), 0) % 10) % 10 === Number(barcode[7]);
-  let bits;
-  let quiet;
-  if (ean8) {
-    bits = "101" + [...barcode.slice(0, 4)].map(digit => left[Number(digit)]).join("") + "01010" +
-      [...barcode.slice(4)].map(digit => [...left[Number(digit)]].map(bit => bit === "1" ? "0" : "1").join("")).join("") + "101";
-    quiet = 7;
-  } else {
-    // Code 128 B preserves 7 digits or an 8-digit value that is not valid EAN-8.
-    // Standard Code 128 symbol widths, including checksum and stop symbols.
-    const widths = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213","221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212","223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323","131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123","113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113","312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214","112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142","121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341","131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232","2331112"];
-    const symbols = [104, ...[...barcode].map(digit => digit.charCodeAt(0) - 32)];
-    const checksum = symbols.reduce((sum, symbol, i) => sum + symbol * (i || 1), 0) % 103;
-    symbols.push(checksum, 106);
-    bits = symbols.map(symbol => [...widths[symbol]].map((width, i) => (i % 2 ? "0" : "1").repeat(Number(width))).join("")).join("");
-    quiet = 10;
-  }
-  const width = bits.length + quiet * 2;
-  let bars = "";
-  for (let x = 0; x < bits.length;) {
-    if (bits[x] === "0") { ++x; continue; }
-    const start = x;
-    while (bits[x] === "1") ++x;
-    bars += `<rect x="${start + quiet}" y="4" width="${x - start}" height="62"/>`;
-  }
-  return `<svg class="run-lookup-barcode" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 70" preserveAspectRatio="none" role="img" aria-label="Ticket Barcode ${barcode}"><rect width="${width}" height="70" fill="#fff"/><g fill="#000">${bars}</g></svg>`;
-}
-
-function clearRunBarcodeLookup() {
-  ++runBarcodeLookupRequest;
-  runBarcodeLookupContext = null;
-  $("runBarcodeLookupResults").replaceChildren();
-  $("runBarcodeLookupStatus").textContent = "";
-  $("runBarcodeLookupRetryBtn").classList.add("hidden");
-  document.body.classList.remove("run-barcode-lookup-open");
-  if (runBarcodeLookupOpener?.isConnected) runBarcodeLookupOpener.focus({ preventScroll: true });
-  if (runBarcodeLookupScroll) window.scrollTo(runBarcodeLookupScroll.x, runBarcodeLookupScroll.y);
-  runBarcodeLookupScroll = null;
-  runBarcodeLookupOpener = null;
-}
-
-function closeRunBarcodeLookup() {
-  const dialog = $("runBarcodeLookupDialog");
-  if (dialog?.open) dialog.close();
-  clearRunBarcodeLookup();
-}
-
-async function loadRunBarcodeLookup() {
-  const context = runBarcodeLookupContext;
-  if (!context || !currentUser) return;
-  const request = ++runBarcodeLookupRequest;
-  const userId = currentUser.id;
-  const status = $("runBarcodeLookupStatus");
-  const results = $("runBarcodeLookupResults");
-  results.replaceChildren();
-  status.textContent = "Loading saved ticket barcodes…";
-  $("runBarcodeLookupRetryBtn").classList.add("hidden");
-  try {
-    const { data, error } = await supabase.from("product_barcodes")
-      .select("barcode, product_code, barcode_type")
-      .eq("product_code", context.productCode)
-      .eq("barcode_type", "ticket_barcode");
-    if (request !== runBarcodeLookupRequest || currentUser?.id !== userId || !$("runBarcodeLookupDialog").open) return;
-    if (error) throw error;
-    // Keep explicit type and product checks even though the query filters them.
-    const barcodes = [...new Set((data || [])
-      .filter(row => row.barcode_type === "ticket_barcode" && row.product_code === context.productCode)
-      .map(row => String(row.barcode ?? ""))
-      .filter(barcode => /^\d{7,8}$/.test(barcode)))].sort();
-    if (!barcodes.length) {
-      status.textContent = "No saved 7–8 digit Ticket Barcode for this product.";
-      return;
-    }
-    status.textContent = "Scan the Ticket Barcode below with your device.";
-    for (const barcode of barcodes) {
-      const card = document.createElement("section");
-      card.className = "run-lookup-ticket";
-      card.innerHTML = `<div class="run-lookup-ticket-label">Ticket Barcode</div>${ticketBarcodeSvg(barcode)}<div class="run-lookup-ticket-number">${barcode}</div>`;
-      results.appendChild(card);
-    }
-  } catch (error) {
-    if (request !== runBarcodeLookupRequest || currentUser?.id !== userId || !$("runBarcodeLookupDialog").open) return;
-    console.error("Run barcode lookup:", error);
-    status.textContent = "Could not load ticket barcodes. Please try again.";
-    $("runBarcodeLookupRetryBtn").classList.remove("hidden");
-  }
-}
-
-function openRunBarcodeLookup(item, opener) {
-  if (!currentUser || !item.product_code) return;
-  const dialog = $("runBarcodeLookupDialog");
-  if (!dialog.open) {
-    runBarcodeLookupScroll = { x: window.scrollX, y: window.scrollY };
-    runBarcodeLookupOpener = opener;
-  }
-  runBarcodeLookupContext = { productCode: String(item.product_code) };
-  $("runBarcodeLookupName").textContent = item.products?.name || item.product_code;
-  $("runBarcodeLookupProductCode").textContent = item.product_code;
-  document.body.classList.add("run-barcode-lookup-open");
-  if (!dialog.open) dialog.showModal();
-  void loadRunBarcodeLookup();
-}
-
-$("runBarcodeLookupCloseBtn").onclick = closeRunBarcodeLookup;
-$("runBarcodeLookupRetryBtn").onclick = loadRunBarcodeLookup;
-$("runBarcodeLookupDialog").addEventListener("cancel", event => {
-  event.preventDefault();
-  closeRunBarcodeLookup();
-});
-$("runBarcodeLookupDialog").addEventListener("close", () => {
-  if (!$("runBarcodeLookupDialog").open) clearRunBarcodeLookup();
-});
-
-
 async function refreshRuns() {
   if (!currentUser) return;
 
@@ -3232,17 +3207,6 @@ function renderRunItem(item, nameMap, ticketBarcodeMap = new Map()) {
     ${item.manual_name ? '<div class="manual-tag">Manual item</div>' : ''}
     <div class="status-line status-${escapeHtml(item.status)}">${escapeHtml(statusText)}</div>
   `;
-
-  if (item.product_code) {
-    const lookup = document.createElement("button");
-    lookup.type = "button";
-    lookup.className = "secondary run-barcode-lookup-btn";
-    lookup.textContent = "Barcode Lookup";
-    lookup.setAttribute("aria-label", `Barcode Lookup: ${productName}`);
-    lookup.disabled = runBulkDeleteMode;
-    lookup.onclick = () => openRunBarcodeLookup(item, lookup);
-    row.appendChild(lookup);
-  }
 
   const gapLabel = document.createElement("label");
   gapLabel.className = "gap-check-toggle run-gap-check";
@@ -5957,6 +5921,5 @@ boot()
   .catch((error) => {
     console.error("GCFR boot failed:", error);
   });
-
 
 
