@@ -1,0 +1,686 @@
+/* GCFR V2 Stock Calculator + navigation refresh */
+
+:root {
+  --v2-green: #143d2a;
+  --v2-green-2: #235f40;
+  --v2-mint: #edf5ef;
+  --v2-mint-2: #dcecdf;
+  --v2-ink: #132018;
+  --v2-soft-ink: #5f6f65;
+  --v2-line: #d7e2da;
+  --v2-amber: #fff5dc;
+  --v2-amber-line: #efd28a;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(36, 91, 64, .06), transparent 32rem),
+    var(--bg);
+}
+
+.topbar {
+  backdrop-filter: blur(12px);
+}
+
+.card {
+  border: 1px solid rgba(23, 63, 43, .06);
+}
+
+.bottom-nav {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.bottom-nav button {
+  min-width: 0;
+}
+
+.bottom-nav button small {
+  font-size: 10px;
+}
+
+.more-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.more-tile {
+  position: relative;
+  min-height: 92px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px;
+  text-align: left;
+  box-shadow: 0 5px 18px rgba(17, 24, 20, .04);
+}
+
+.more-tile span:first-child {
+  font-size: 25px;
+}
+
+.more-tile strong {
+  font-size: 15px;
+}
+
+.stock-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.stock-hero {
+  overflow: hidden;
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(20, 61, 42, .98), rgba(35, 95, 64, .94));
+  color: #fff;
+  border: 0;
+}
+
+.stock-hero::after {
+  content: "";
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  right: -75px;
+  top: -85px;
+  background: rgba(255, 255, 255, .07);
+}
+
+.stock-hero .muted {
+  color: rgba(255, 255, 255, .72);
+}
+
+.stock-hero-head,
+.stock-section-head,
+.stock-product-head,
+.stock-total-row,
+.stock-layer-row,
+.stock-package-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stock-hero-head {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 14px;
+}
+
+.stock-hero h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.stock-manager-badge,
+.stock-type-pill,
+.stock-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.stock-manager-badge {
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+}
+
+.stock-quick-actions {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.stock-scan-button {
+  min-height: 58px;
+  border: 0;
+  border-radius: 17px;
+  background: #fff;
+  color: var(--v2-green);
+  font-weight: 900;
+  font-size: 16px;
+  box-shadow: 0 7px 22px rgba(0, 0, 0, .12);
+}
+
+.stock-last-scan {
+  min-height: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, .76);
+}
+
+.stock-search-wrap {
+  position: relative;
+}
+
+.stock-search-wrap .search-input {
+  min-height: 52px;
+  border-radius: 15px;
+}
+
+.stock-search-results {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.stock-search-result {
+  width: 100%;
+  border: 1px solid var(--v2-line);
+  background: #fff;
+  color: var(--v2-ink);
+  border-radius: 14px;
+  padding: 12px 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.stock-search-result span {
+  display: grid;
+  gap: 3px;
+}
+
+.stock-search-result small {
+  color: var(--muted);
+}
+
+.stock-search-result b {
+  color: var(--brand-2);
+  font-size: 12px;
+}
+
+.stock-selected-card {
+  border: 1px solid var(--v2-line);
+  background: #fff;
+}
+
+.stock-product-head {
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.stock-product-name {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.22;
+}
+
+.stock-product-code {
+  margin-top: 5px;
+  color: var(--v2-soft-ink);
+  font-size: 12px;
+}
+
+.stock-profile-ready,
+.stock-profile-empty {
+  border-radius: 16px;
+  background: var(--v2-mint);
+  border: 1px solid var(--v2-mint-2);
+  padding: 13px;
+}
+
+.stock-profile-ready {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.stock-profile-ready > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.stock-profile-ready small,
+.stock-profile-empty span {
+  color: var(--v2-soft-ink);
+}
+
+.stock-profile-empty {
+  display: grid;
+  gap: 4px;
+}
+
+.stock-type-pill {
+  background: var(--v2-green);
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.stock-setup-panel,
+.stock-package-panel,
+.stock-unknown-panel {
+  margin-top: 12px;
+  border-radius: 17px;
+  padding: 14px;
+  border: 1px solid var(--v2-line);
+  background: #fbfdfb;
+}
+
+.stock-form-grid {
+  display: grid;
+  gap: 11px;
+}
+
+.stock-form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--v2-soft-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stock-form-grid input,
+.stock-form-grid select {
+  width: 100%;
+  min-height: 47px;
+}
+
+.stock-form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 8px;
+}
+
+.stock-warning {
+  border: 1px solid var(--v2-amber-line);
+  background: var(--v2-amber);
+  color: #654d10;
+  border-radius: 14px;
+  padding: 12px;
+  font-weight: 700;
+}
+
+.stock-packages-card,
+.stock-calculator-card {
+  border: 1px solid var(--v2-line);
+}
+
+.stock-section-head {
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.stock-section-head h3,
+.stock-calculator-card h3 {
+  margin: 0;
+}
+
+.stock-package-list {
+  display: grid;
+  gap: 8px;
+}
+
+.stock-package-row {
+  border: 1px solid var(--v2-line);
+  border-radius: 15px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  background: #fff;
+}
+
+.stock-package-row > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.stock-package-row span,
+.stock-package-row small {
+  color: var(--v2-soft-ink);
+}
+
+.stock-package-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.stock-package-actions button {
+  min-height: 36px;
+  padding: 7px 11px;
+}
+
+.stock-package-select-wrap {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 11px;
+}
+
+.stock-package-select-wrap label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--v2-soft-ink);
+}
+
+.stock-package-select-wrap select {
+  min-height: 49px;
+}
+
+.stock-package-selected {
+  border-radius: 13px;
+  background: var(--soft);
+  padding: 10px 12px;
+  margin-bottom: 13px;
+  color: var(--v2-soft-ink);
+  font-size: 12px;
+}
+
+.stock-calc-block {
+  border-top: 1px solid var(--v2-line);
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.stock-calc-title {
+  font-weight: 900;
+  margin-bottom: 9px;
+}
+
+.stock-two-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.stock-two-inputs label,
+.stock-display-weight {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--v2-soft-ink);
+}
+
+.stock-two-inputs input,
+.stock-display-weight input {
+  min-height: 47px;
+}
+
+.stock-manual-weight-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.stock-manual-weight-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.stock-manual-weight-row {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 11px;
+  background: var(--soft);
+}
+
+.stock-layers {
+  display: grid;
+  gap: 8px;
+}
+
+.stock-layer-row {
+  display: grid;
+  grid-template-columns: 54px 1fr 18px 1fr 62px;
+}
+
+.stock-layer-row strong {
+  font-size: 13px;
+}
+
+.stock-layer-row input {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  min-height: 43px;
+}
+
+.stock-layer-row span {
+  text-align: center;
+  color: var(--muted);
+}
+
+.stock-layer-total {
+  border-radius: 10px;
+  background: var(--v2-mint);
+  color: var(--v2-green);
+  padding: 8px 6px;
+  font-weight: 900;
+}
+
+.stock-summary {
+  margin-top: 15px;
+  border-radius: 18px;
+  background: var(--v2-green);
+  color: #fff;
+  padding: 15px;
+  display: grid;
+  gap: 9px;
+}
+
+.stock-total-row {
+  font-size: 13px;
+  color: rgba(255, 255, 255, .76);
+}
+
+.stock-total-row strong {
+  color: #fff;
+}
+
+.stock-total-row.grand {
+  border-top: 1px solid rgba(255, 255, 255, .17);
+  padding-top: 10px;
+  margin-top: 2px;
+  font-size: 15px;
+}
+
+.stock-total-row.grand strong {
+  font-size: 23px;
+}
+
+.stock-unknown-panel {
+  background: var(--v2-amber);
+  border-color: var(--v2-amber-line);
+}
+
+.stock-unknown-code {
+  margin: 6px 0 8px;
+  font-size: 18px;
+  font-weight: 900;
+  word-break: break-all;
+}
+
+.stock-unknown-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.stock-scanner-wrap {
+  margin-top: 10px;
+}
+
+@media (max-width: 460px) {
+  .bottom-nav {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .bottom-nav button {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .bottom-nav button small {
+    font-size: 9px;
+  }
+
+  .stock-two-inputs,
+  .stock-form-actions,
+  .stock-unknown-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-layer-row {
+    grid-template-columns: 46px 1fr 14px 1fr 54px;
+    gap: 5px;
+  }
+}
+
+
+/* ============================================================
+   V2.0.2 — Stock scanner fix + visual polish
+   ============================================================ */
+
+#stockScannerWrap:not(.hidden) {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #fff;
+  overscroll-behavior: contain;
+}
+
+#stockScannerWrap.hidden {
+  display: none !important;
+}
+
+#stockScannerWrap #stockReader {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0 !important;
+  border-radius: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+#stockScannerWrap #stockReader video {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+#stockScannerWrap .barcode-guide {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: clamp(100px, 24dvh, 180px);
+  border: 2px solid rgba(255,255,255,.92);
+  border-radius: 14px;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.12);
+}
+
+#stockScannerWrap .barcode-guide span {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 2px;
+  background: #ff453a;
+  box-shadow: 0 0 10px rgba(255,69,58,.9);
+}
+
+#stockScannerWrap .scan-status {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 16px;
+  right: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #fff;
+  background: rgba(0,0,0,.68);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+#stockScannerWrap #stockStopScannerBtn {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  width: auto;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid rgba(255,255,255,.8);
+  color: #fff;
+  background: rgba(0,0,0,.68);
+  backdrop-filter: blur(10px);
+}
+
+.stock-manager-badge {
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.22);
+  backdrop-filter: blur(8px);
+}
+
+.stock-selected-card,
+.stock-packages-card,
+.stock-calculator-card {
+  overflow: hidden;
+}
+
+.stock-profile-ready,
+.stock-profile-empty {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72);
+}
+
+.stock-package-row {
+  transition: transform .14s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+@media (hover:hover) {
+  .stock-package-row:hover {
+    transform: translateY(-1px);
+    border-color: #bfd2c4;
+    box-shadow: 0 8px 20px rgba(20,61,42,.07);
+  }
+}
+
+.stock-summary {
+  box-shadow: 0 12px 26px rgba(20,61,42,.18);
+}
+
+.stock-total-row.grand strong {
+  letter-spacing: -.03em;
+}
