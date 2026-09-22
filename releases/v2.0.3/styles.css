@@ -1,0 +1,5380 @@
+:root {
+  --bg: #f3f5f3;
+  --card: #ffffff;
+  --ink: #111814;
+  --muted: #69726d;
+  --line: #dfe4e1;
+  --brand: #173f2b;
+  --brand-2: #245b40;
+  --soft: #e9f0eb;
+  --danger: #9b2c2c;
+  --warning: #8a5a00;
+  --radius: 18px;
+  --shadow: 0 8px 28px rgba(17, 24, 20, .07);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+button, input { font: inherit; }
+
+button { cursor: pointer; }
+
+.hidden { display: none !important; }
+
+.auth-shell {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(100%, 480px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.logo-mark {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--brand);
+  color: white;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.brand-block h1 { margin: 0; font-size: 28px; }
+.brand-block p { margin: 2px 0 0; color: var(--muted); }
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 5px;
+  background: #eef1ef;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  min-height: 42px;
+  font-weight: 800;
+}
+
+.segmented button.active {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.stack { display: grid; gap: 14px; }
+
+label {
+  display: grid;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+input {
+  min-height: 48px;
+  border: 1px solid #cdd4d0;
+  background: white;
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 0 14px;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--brand-2);
+  box-shadow: 0 0 0 3px rgba(36, 91, 64, .12);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.display-preview {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f0f3f1;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.primary, .secondary, .scan-button {
+  border: 0;
+  border-radius: 12px;
+  min-height: 48px;
+  padding: 0 16px;
+  font-weight: 850;
+}
+
+.primary {
+  background: var(--brand);
+  color: white;
+}
+
+.primary:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.secondary {
+  background: #e9eeeb;
+  color: var(--ink);
+}
+
+.text-button {
+  border: 0;
+  background: transparent;
+  min-height: 40px;
+  padding: 0;
+  color: var(--brand-2);
+  font-weight: 800;
+}
+
+.text-button.danger { color: var(--danger); }
+
+.full { width: 100%; }
+
+.status-text {
+  min-height: 22px;
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.app-shell {
+  min-height: 100svh;
+  padding-bottom: calc(82px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 76px;
+  background: rgba(243,245,243,.92);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(223,228,225,.85);
+}
+
+.eyebrow {
+  color: var(--brand-2);
+  font-weight: 900;
+  letter-spacing: .08em;
+  font-size: 11px;
+}
+
+.topbar h1 { margin: 2px 0 0; font-size: 23px; }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-pill {
+  max-width: 125px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 11px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.icon-button {
+  border: 1px solid var(--line);
+  background: white;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 22px;
+}
+
+.screen {
+  display: none;
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 14px;
+}
+
+.screen.active { display: block; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 5px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.count-badge {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--brand);
+  color: white;
+  font-weight: 900;
+}
+
+.scan-button {
+  width: 100%;
+  min-height: 72px;
+  background: var(--brand);
+  color: white;
+  font-size: 18px;
+}
+
+.scan-icon { margin-right: 8px; }
+
+.scanner-wrap {
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 16px;
+  background: #0f1712;
+}
+
+#reader { width: 100%; overflow: hidden; border-radius: 12px; }
+#reader video { border-radius: 12px; }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 14px 0;
+}
+
+.divider::before, .divider::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.empty-state {
+  color: var(--muted);
+  padding: 18px 0;
+  text-align: center;
+}
+
+.list-row, .run-item, .request-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.item-title { font-weight: 850; }
+.item-sub { color: var(--muted); font-size: 13px; margin-top: 3px; }
+
+.remove-btn {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: #f4eaea;
+  color: var(--danger);
+  border-radius: 10px;
+  font-weight: 900;
+}
+
+.runs-list {
+  display: grid;
+  gap: 14px;
+}
+
+.run-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.run-head {
+  padding: 12px 14px;
+  background: #f0f4f1;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.run-head strong { font-size: 15px; }
+
+.run-items {
+  display: grid;
+  gap: 0;
+}
+
+.run-item {
+  border: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--line);
+}
+
+.run-item:first-child { border-top: 0; }
+
+.status-line {
+  margin-top: 7px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status-pending { color: #6a6d6b; }
+.status-processing { color: var(--warning); }
+.status-done { color: var(--brand-2); }
+.status-out_of_stock { color: var(--danger); }
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.action-row button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-weight: 800;
+  background: #e9eeeb;
+}
+
+.action-row .done { background: #e4f1e8; color: var(--brand-2); }
+.action-row .oos { background: #f6e7e7; color: var(--danger); }
+
+.check-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+}
+
+.check-row.done .item-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.request-card .primary { margin-top: 10px; width: 100%; }
+
+.account-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.account-grid dt { color: var(--muted); }
+.account-grid dd { margin: 0; font-weight: 850; }
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  min-height: calc(68px + env(safe-area-inset-bottom));
+  padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-around;
+}
+
+.bottom-nav button {
+  position: relative;
+  flex: 1;
+  max-width: 110px;
+  border: 0;
+  background: transparent;
+  color: #768079;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 54px;
+  border-radius: 12px;
+}
+
+.bottom-nav button span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.bottom-nav button small {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bottom-nav button.active {
+  color: var(--brand);
+  background: var(--soft);
+}
+
+.nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 18%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.toast {
+  position: fixed;
+  z-index: 100;
+  left: 50%;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(calc(100% - 28px), 500px);
+  background: #111814;
+  color: white;
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  font-weight: 750;
+}
+
+@media (max-width: 430px) {
+  .two-col { grid-template-columns: 1fr; }
+  .auth-shell { padding: 14px; }
+  .auth-card { padding: 18px; }
+}
+
+.product-search-block {
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.search-label {
+  margin-bottom: 7px;
+}
+
+.search-input {
+  width: 100%;
+  min-height: 52px;
+  font-size: 16px;
+}
+
+.search-results {
+  margin-top: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+}
+
+.search-result-item {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: white;
+  text-align: left;
+  padding: 12px 14px;
+  display: block;
+}
+
+.search-result-item:first-child {
+  border-top: 0;
+}
+
+.search-result-item:active {
+  background: var(--soft);
+}
+
+.search-result-name {
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.search-result-code {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.search-result-empty {
+  padding: 14px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 14px;
+}
+
+
+.manual-load-shortcut {
+  margin-top: 10px;
+}
+
+.admin-danger {
+  background: #f6e7e7 !important;
+  color: var(--danger) !important;
+}
+
+.admin-reset {
+  background: #fff3d9 !important;
+  color: #7a5200 !important;
+}
+
+.run-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.run-admin-actions button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.manual-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f0f3f1;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bottom-nav button small {
+  font-size: 10px;
+}
+
+@media (max-width: 520px) {
+  .bottom-nav {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .bottom-nav button {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .bottom-nav button span {
+    font-size: 18px;
+  }
+
+  .bottom-nav button small {
+    font-size: 9px;
+  }
+}
+
+
+.manual-draft-summary {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 46px;
+  border: 1px dashed #9eaaa3;
+  background: #f8faf8;
+  border-radius: 12px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.manual-draft-summary strong {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: white;
+  display: grid;
+  place-items: center;
+}
+
+.history-filters {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+
+.history-filter {
+  border: 1px solid var(--line);
+  background: white;
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.history-filter.active {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+}
+
+.deleted-card {
+  border-color: #dababa;
+  background: #fffafa;
+}
+
+.deleted-item {
+  opacity: .72;
+  background: #fff7f7;
+}
+
+.deleted-label,
+.request-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 900;
+  margin-top: 5px;
+}
+
+.deleted-label {
+  background: #f4dddd;
+  color: var(--danger);
+}
+
+.request-status.pending {
+  background: #fff2d2;
+  color: #765000;
+}
+
+.request-status.sent {
+  background: #e4edf8;
+  color: #315a84;
+}
+
+.request-status.completed {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+.request-meta {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.subheading {
+  margin: 20px 0 8px;
+  font-size: 15px;
+}
+
+.subheading:first-of-type {
+  margin-top: 4px;
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.request-actions button {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 850;
+}
+
+.bottom-nav {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.bottom-nav button {
+  flex: 0 0 72px;
+}
+
+
+.checklist-calendar {
+  display: grid;
+  grid-template-columns: 46px 1fr 46px;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0 0;
+}
+
+.checklist-calendar input[type="date"] {
+  width: 100%;
+  min-height: 46px;
+  text-align: center;
+  font-weight: 850;
+}
+
+.calendar-nav-btn {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.checklist-today-btn {
+  width: 100%;
+  text-align: center;
+  margin: 2px 0 10px;
+}
+
+.checklist-day-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 900;
+  margin-top: 5px;
+}
+
+.checklist-delete-btn {
+  min-width: 72px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: #f6e7e7;
+  color: var(--danger);
+  font-weight: 850;
+}
+
+
+.quick-add-launch {
+  margin: 4px 0 10px;
+}
+
+.quick-add-panel {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 0 0 14px;
+  background: #f8faf8;
+}
+
+.quick-step + .quick-step {
+  margin-top: 16px;
+}
+
+.quick-step-title,
+.manual-add-title {
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 9px;
+}
+
+.period-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.period-buttons button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.period-buttons button.active {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+}
+
+.quick-template-list {
+  display: grid;
+  gap: 7px;
+}
+
+.quick-template-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  font-weight: 750;
+}
+
+.quick-template-option input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+}
+
+.quick-add-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.manual-add-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin-bottom: 14px;
+  background: white;
+}
+
+.manual-task-form {
+  display: grid;
+  grid-template-columns: 118px 1fr auto;
+  gap: 8px;
+}
+
+.manual-task-form select {
+  min-height: 48px;
+  border: 1px solid #cdd4d0;
+  border-radius: 12px;
+  background: white;
+  padding: 0 10px;
+  font-weight: 800;
+}
+
+.checklist-period-section {
+  margin: 14px 0 18px;
+}
+
+.checklist-period-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.checklist-period-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.checklist-period-count {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #eef2ef;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.checklist-period-list {
+  display: grid;
+  gap: 8px;
+}
+
+.carried-row {
+  border-color: #e5baba;
+  background: #fff7f7;
+}
+
+.carried-row .item-title {
+  text-decoration: line-through;
+  color: #b12d2d;
+}
+
+.carried-x {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: #f4dddd;
+  color: #b12d2d;
+  font-weight: 950;
+  font-size: 15px;
+}
+
+.carried-next-label {
+  margin-top: 4px;
+  color: #b12d2d;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.carried-from-label {
+  margin-top: 4px;
+  color: var(--brand-2);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+@media (max-width: 520px) {
+  .manual-task-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.draft-run-row {
+  align-items: center;
+}
+
+.draft-item-main {
+  min-width: 0;
+}
+
+.draft-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gap-check-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.gap-check-toggle input {
+  width: 19px;
+  height: 19px;
+  min-height: 0;
+  margin: 0;
+}
+
+.run-gap-check {
+  margin-top: 8px;
+}
+
+.gap-check-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-top: 5px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #fff1cf;
+  color: #765000;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.cancel-action {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+.status-cancelled {
+  color: var(--danger);
+}
+
+@media (max-width: 560px) {
+  .draft-run-row {
+    align-items: flex-start;
+  }
+
+  .draft-item-controls {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
+
+
+.checklist-period-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.next-shift-btn {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  color: var(--brand);
+  padding: 0 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.next-shift-btn:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+
+.completion-request-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.complete-request-btn,
+.cancel-request-btn,
+.approve-request-btn,
+.reject-request-btn {
+  min-height: 36px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.complete-request-btn {
+  background: #e4edf8;
+  color: #315a84;
+}
+
+.cancel-request-btn,
+.reject-request-btn {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+.approve-request-btn {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+.completion-request-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.completion-request-badge.pending {
+  background: #fff2d2;
+  color: #765000;
+}
+
+.completion-request-badge.rejected {
+  background: #f4dddd;
+  color: var(--danger);
+}
+
+
+.checklist-comments {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.checklist-comments-title {
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.checklist-comment-thread {
+  display: grid;
+  gap: 7px;
+}
+
+.checklist-comment {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f5f7f5;
+}
+
+.checklist-comment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.checklist-comment-body {
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.checklist-comment-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.checklist-comment-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.checklist-comment-form input {
+  min-height: 40px;
+}
+
+.checklist-comment-form button {
+  min-width: 64px;
+}
+
+@media (max-width: 480px) {
+  .checklist-comment-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+}
+
+
+.shift-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.request-edit-btn {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: white;
+  color: #315a84;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.shift-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.shift-status-badge.closed {
+  background: #e8ece9;
+  color: var(--muted);
+}
+
+.shift-status-badge.requested {
+  background: #fff2d2;
+  color: #765000;
+}
+
+.shift-status-badge.editing {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+
+.checklist-comment-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comment-edited-label {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e8ece9;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.checklist-comment-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.comment-edit-btn,
+.comment-delete-btn,
+.comment-edit-cancel-btn {
+  min-height: 32px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.comment-edit-btn {
+  background: #e4edf8;
+  color: #315a84;
+}
+
+.comment-delete-btn,
+.comment-edit-cancel-btn {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+.checklist-comment-edit-form {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.checklist-comment-edit-form input {
+  min-height: 36px;
+}
+
+@media (max-width: 520px) {
+  .checklist-comment-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .checklist-comment-meta-right {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+
+.edit-selection-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 9px;
+  background: #e4edf8;
+  color: #315a84;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.edit-request-select {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+}
+
+.edit-request-item {
+  outline: 1px solid #b9cce1;
+  outline-offset: -1px;
+}
+
+.edit-request-item-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  margin-top: 5px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #fff2d2;
+  color: #765000;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.edit-request-item-label.approved {
+  background: #e0f1e5;
+  color: var(--brand-2);
+}
+
+
+.edit-request-item-label.pending-move {
+  background: #fff2d2;
+  color: #765000;
+}
+
+
+.move-request-selectable {
+  margin-top: 5px;
+  color: #315a84;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.move-request-unavailable {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.edit-request-select:disabled {
+  opacity: .35;
+}
+
+
+.cancel-carry-selectable {
+  margin-top: 5px;
+  color: #9a5a00;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.edit-request-item-label.cancel-carry {
+  background: #f6e7e7;
+  color: var(--danger);
+}
+
+
+.quick-checklist-matrix {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+
+.quick-matrix-header,
+.quick-template-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 82px 92px 82px;
+  min-width: 430px;
+  align-items: center;
+}
+
+.quick-matrix-header {
+  min-height: 42px;
+  background: #f3f6f4;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.quick-matrix-header > div:first-child {
+  text-align: left;
+  padding-left: 12px;
+}
+
+.quick-template-row {
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+}
+
+.quick-template-row:last-child {
+  border-bottom: 0;
+}
+
+.quick-template-name {
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.quick-template-cell {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  cursor: pointer;
+}
+
+.quick-template-cell input {
+  width: 21px;
+  height: 21px;
+  min-height: 0;
+  margin: 0;
+}
+
+@media (max-width: 520px) {
+  .quick-checklist-matrix {
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+}
+
+
+/* V1.27 mobile/PWA hardening */
+html {
+  min-height: 100%;
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  touch-action: manipulation;
+}
+
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button {
+  min-width: 44px;
+}
+
+.topbar {
+  padding-top: max(14px, env(safe-area-inset-top));
+}
+
+.screen {
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+
+.bottom-nav {
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+}
+
+#reader video,
+#reader canvas {
+  max-width: 100% !important;
+  border-radius: 14px;
+}
+
+@media (max-width: 430px) {
+  .topbar {
+    min-height: 68px;
+    padding-bottom: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 21px;
+  }
+
+  .user-pill {
+    max-width: 92px;
+  }
+
+  .screen {
+    padding-top: 10px;
+    padding-bottom: 18px;
+  }
+
+  .card {
+    border-radius: 15px;
+    padding: 13px;
+  }
+
+  .primary,
+  .secondary,
+  .scan-button,
+  input {
+    min-height: 46px;
+  }
+}
+
+
+/* ============================================================
+   V1.28 — Login memory
+   ============================================================ */
+.remember-login-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.remember-login-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: var(--brand);
+}
+
+.remember-login-row span {
+  display: grid;
+  gap: 2px;
+}
+
+.remember-login-row strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.remember-login-row small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+
+/* ============================================================
+   V1.28 — iPhone / small-phone layout
+   ============================================================ */
+
+/* Prevent iOS Safari zooming into form controls. */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* Apple-style minimum usable touch target. */
+button,
+.icon-button,
+.calendar-nav-btn,
+.bottom-nav button {
+  min-height: 44px;
+}
+
+/* Long button text must stay inside the button instead of widening it. */
+button {
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.15;
+}
+
+/* Do not allow flex/grid children to force the screen wider than the viewport. */
+.card,
+.list-row,
+.run-item,
+.request-card,
+.action-row,
+.shift-action-group,
+.quick-add-actions,
+.checklist-comment-form {
+  min-width: 0;
+}
+
+.topbar {
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+
+.header-actions {
+  min-width: 0;
+}
+
+.user-pill {
+  min-width: 0;
+}
+
+/* Fit all bottom-navigation buttons on an iPhone instead of horizontal scrolling. */
+@media (max-width: 520px) {
+  .app-shell {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav {
+    overflow-x: hidden;
+    justify-content: stretch;
+    gap: 1px;
+    padding-top: 5px;
+    padding-bottom: calc(5px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav button {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    max-width: none;
+    min-height: 54px;
+    padding: 3px 2px;
+    border-radius: 10px;
+  }
+
+  .bottom-nav button span {
+    font-size: 18px;
+  }
+
+  .bottom-nav button small {
+    max-width: 100%;
+    font-size: 9px;
+    line-height: 1.05;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-badge {
+    right: 8%;
+    top: 0;
+  }
+
+  .toast {
+    width: calc(100% - 24px);
+    max-width: 420px;
+  }
+
+  .action-row,
+  .run-admin-actions,
+  .request-actions,
+  .shift-action-group,
+  .quick-add-actions {
+    gap: 6px;
+  }
+
+  .action-row button,
+  .run-admin-actions button,
+  .request-actions button,
+  .shift-action-group button,
+  .quick-add-actions button {
+    min-height: 44px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .checklist-comment-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .checklist-comment-form input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .checklist-comment-form button {
+    min-width: 58px;
+    min-height: 44px;
+  }
+
+  /* Quick Add remains a 3-column time matrix but now fits normal iPhones. */
+  .quick-matrix-header,
+  .quick-template-row {
+    grid-template-columns: minmax(105px, 1fr) 64px 70px 64px;
+    min-width: 0;
+  }
+
+  .quick-matrix-header {
+    font-size: 9px;
+  }
+
+  .quick-matrix-header > div {
+    overflow-wrap: anywhere;
+  }
+
+  .quick-template-name {
+    padding: 8px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .quick-template-cell input {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 430px) {
+  .topbar {
+    min-height: 62px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: 8px;
+  }
+
+  .topbar h1 {
+    font-size: 19px;
+  }
+
+  .eyebrow {
+    font-size: 9px;
+  }
+
+  .header-actions {
+    gap: 5px;
+  }
+
+  .user-pill {
+    max-width: 76px;
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  .icon-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+  }
+
+  .screen {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  .card h2 {
+    font-size: 17px;
+  }
+
+  .primary,
+  .secondary,
+  .scan-button {
+    min-height: 46px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .two-col {
+    gap: 8px;
+  }
+
+  .account-grid {
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 9px;
+    font-size: 13px;
+  }
+
+  .checklist-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 6px;
+  }
+
+  .calendar-nav-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* iPhone SE / very narrow devices */
+@media (max-width: 360px) {
+  .screen {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .card {
+    padding: 10px;
+  }
+
+  .topbar {
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  .user-pill {
+    max-width: 62px;
+  }
+
+  .bottom-nav button small {
+    font-size: 8px;
+  }
+
+  .quick-matrix-header,
+  .quick-template-row {
+    grid-template-columns: minmax(88px, 1fr) 56px 62px 56px;
+  }
+
+  .quick-template-name {
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 11px;
+  }
+
+  .quick-matrix-header {
+    font-size: 8px;
+  }
+
+  .action-row button {
+    flex: 1 1 calc(50% - 4px);
+  }
+}
+
+
+/* ============================================================
+   V1.29 — Barcode scanner
+   ============================================================ */
+.scanner-wrap {
+  display: grid;
+  gap: 9px;
+}
+
+#reader {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #111;
+}
+
+#reader video {
+  width: 100% !important;
+  max-height: 58dvh;
+  object-fit: cover;
+}
+
+#reader__dashboard_section_csr button,
+#reader button {
+  min-height: 44px;
+}
+
+.scan-status {
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.barcode-link-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.barcode-link-title {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.barcode-value {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #f3f6f4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 850;
+  word-break: break-all;
+}
+
+.barcode-admin-link-tools {
+  display: grid;
+  gap: 8px;
+}
+
+.barcode-link-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.barcode-link-result > div {
+  min-width: 0;
+}
+
+.barcode-link-result strong {
+  flex: 0 0 auto;
+  color: var(--brand);
+}
+
+@media (max-width: 430px) {
+  #reader video {
+    max-height: 48dvh;
+  }
+
+  .barcode-link-panel {
+    padding: 12px;
+  }
+}
+
+
+/* Full-screen scanner. Keep the full video frame visible for decoding. */
+body.scanner-open { overflow: hidden; }
+body.scanner-open #appShell { visibility: hidden; }
+body.scanner-open #toast { z-index: 10002; }
+#scannerWrap:not(.hidden) {
+  position: fixed; inset: 0; z-index: 10000;
+  width: 100%; height: 100%; height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0; padding: 0; background: #000; color: #fff;
+  overscroll-behavior: contain;
+}
+#scannerWrap.hidden { display: none !important; }
+#scannerWrap #reader { width: 100%; border: 0 !important; border-radius: 0; background: #000; }
+#scannerWrap #reader video {
+  display: block; width: 100% !important; height: auto !important;
+  max-height: 100dvh; object-fit: contain;
+}
+#scannerWrap .scan-status {
+  position: absolute; bottom: max(24px, env(safe-area-inset-bottom));
+  left: 16px; right: 16px; padding: 12px;
+  color: #fff; background: rgba(0,0,0,.7); border-radius: 10px;
+  pointer-events: none; font-size: 14px;
+}
+#scannerWrap #stopScannerBtn {
+  position: absolute; top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right)); width: auto;
+  min-height: 44px; padding: 10px 18px;
+  border: 1px solid #fff; color: #fff; background: rgba(0,0,0,.75);
+}
+
+
+/* v1.31: visible guide, independent of the image sent to the decoder. */
+#scannerWrap #reader { position: absolute; inset: 0; width: 100%; height: 100%; }
+#scannerWrap #reader video { width: 100% !important; height: 100% !important; max-height: none; object-fit: cover; }
+#scannerWrap .barcode-guide {
+  position: absolute; left: 8%; right: 8%; top: 50%; transform: translateY(-50%);
+  height: clamp(100px, 24dvh, 180px); border: 2px solid rgba(255,255,255,.9);
+  border-radius: 12px; pointer-events: none;
+}
+#scannerWrap .barcode-guide span {
+  position: absolute; left: 8px; right: 8px; top: 50%; height: 2px;
+  background: #ff3b30; box-shadow: 0 0 8px rgba(255,59,48,.8);
+}
+
+
+/* ============================================================
+   V1.33 — iPhone layout fixes
+   ============================================================ */
+
+/* Keep inline Add forms inside the card on narrow iPhones. */
+.inline-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+
+.inline-form input {
+  width: 100%;
+  min-width: 0;
+}
+
+.inline-form button {
+  justify-self: stretch;
+  min-width: 88px;
+}
+
+/* Also keep the checklist manual-add row from expanding horizontally. */
+.manual-task-form,
+.checklist-calendar {
+  min-width: 0;
+}
+
+.manual-task-form input,
+.checklist-calendar input[type="date"] {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Allow the long date label + Today badge to wrap instead of colliding. */
+#checklistDateLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  line-height: 1.25;
+}
+
+#checklistDateLabel .checklist-day-badge {
+  margin-top: 0;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 430px) {
+  .inline-form {
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 8px;
+  }
+
+  .inline-form button {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  #checklistDateLabel {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 360px) {
+  .inline-form {
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 7px;
+  }
+}
+
+
+/* ============================================================
+   V1.34 — Checklist delete tools + date collision fix
+   ============================================================ */
+
+.checklist-calendar {
+  width: 100%;
+  grid-template-columns: 46px minmax(0, 1fr) 46px;
+  overflow: hidden;
+}
+
+.checklist-calendar > * {
+  min-width: 0;
+}
+
+.checklist-calendar input[type="date"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding-left: 6px;
+  padding-right: 6px;
+  overflow: hidden;
+}
+
+.calendar-nav-btn {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.checklist-delete-tools {
+  margin: 4px 0 14px;
+}
+
+.checklist-bulk-start {
+  width: 100%;
+  min-height: 44px;
+}
+
+.checklist-bulk-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.checklist-bulk-count {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.checklist-bulk-actions button {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 850;
+}
+
+.checklist-bulk-actions button:disabled {
+  opacity: .45;
+}
+
+.checklist-bulk-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 1px solid #dfbcbc;
+  border-radius: 10px;
+  background: #fff7f7;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.checklist-bulk-select input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--danger);
+}
+
+.check-row.bulk-delete-selected {
+  border-color: #c55252;
+  background: #fff7f7;
+  box-shadow: inset 0 0 0 1px rgba(197,82,82,.16);
+}
+
+@media (max-width: 430px) {
+  .checklist-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 6px;
+  }
+
+  .checklist-calendar input[type="date"] {
+    font-size: 15px;
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .checklist-bulk-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .checklist-bulk-count {
+    grid-column: 1 / -1;
+  }
+
+  .checklist-bulk-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .checklist-bulk-select span {
+    display: none;
+  }
+
+  .checklist-bulk-select {
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+
+/* ============================================================
+   V1.35 — Native iOS date control isolation + delete visibility
+   ============================================================ */
+
+/* The native iOS date input can visually overflow its grid cell.  Render the
+   date ourselves and keep the real date input transparent inside the centre
+   cell, so it can still open the native picker without touching the arrows. */
+.checklist-calendar {
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 10px;
+  overflow: visible;
+}
+
+.checklist-date-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid #cdd4d0;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#checklistDateDisplay {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0 10px;
+  text-align: center;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.checklist-date-control input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.checklist-date-control input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.calendar-nav-btn {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  flex: 0 0 48px;
+  z-index: 3;
+}
+
+/* Bulk-delete controls are hidden by JS whenever the selected date has zero
+   checklist items. Keep hidden authoritative even if older rules set display. */
+.checklist-delete-tools.hidden,
+.checklist-bulk-start.hidden,
+.checklist-bulk-actions.hidden {
+  display: none !important;
+}
+
+@media (max-width: 430px) {
+  .checklist-calendar {
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+    gap: 10px;
+  }
+
+  .calendar-nav-btn {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    flex-basis: 46px;
+  }
+
+  .checklist-date-control {
+    min-height: 46px;
+  }
+
+  #checklistDateDisplay {
+    font-size: 16px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .checklist-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+
+  .calendar-nav-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    flex-basis: 44px;
+  }
+
+  #checklistDateDisplay {
+    font-size: 15px;
+  }
+}
+
+
+
+
+/* ============================================================
+   V1.48 — History date navigation
+   ============================================================ */
+.history-calendar {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.history-date-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid #cdd4d0;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#historyDateDisplay {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0 10px;
+  text-align: center;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.history-date-control input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.history-date-control input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.history-today-btn {
+  display: block;
+  margin: 0 auto 12px;
+}
+
+@media (max-width: 430px) {
+  .history-calendar {
+    grid-template-columns: 46px minmax(0, 1fr) 46px;
+  }
+
+  .history-date-control {
+    min-height: 46px;
+  }
+
+  #historyDateDisplay {
+    font-size: 16px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .history-calendar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+
+  #historyDateDisplay {
+    font-size: 15px;
+  }
+}
+
+
+/* ============================================================
+   V1.49 — Run bulk delete + complete ranked product search
+   ============================================================ */
+.run-delete-tools {
+  margin: 0 0 14px;
+}
+
+.run-delete-tools > .secondary {
+  width: 100%;
+}
+
+.run-bulk-delete-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f7f9f7;
+}
+
+.run-select-all,
+.run-bulk-select-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.run-select-all input,
+.run-bulk-select-box input {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.run-bulk-delete-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.run-bulk-delete-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.run-head-info {
+  min-width: 0;
+}
+
+.run-bulk-select-box {
+  margin-bottom: 8px;
+  color: var(--brand);
+  font-size: 13px;
+}
+
+.search-result-count {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f9f7;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.search-results {
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 560px) {
+  .run-bulk-delete-actions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .run-select-all {
+    grid-column: 1;
+  }
+
+  .run-bulk-delete-count {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  .run-bulk-delete-buttons {
+    grid-column: 1 / -1;
+  }
+
+  .run-bulk-delete-buttons button {
+    flex: 1 1 0;
+  }
+}
+
+
+/* ============================================================
+   V1.50 — Checklist Select All
+   ============================================================ */
+.checklist-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 850;
+  color: var(--brand);
+  cursor: pointer;
+}
+
+.checklist-select-all input {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+@media (max-width: 560px) {
+  .checklist-bulk-actions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .checklist-select-all {
+    grid-column: 1;
+  }
+
+  .checklist-bulk-count {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  #checklistBulkDeleteCancelBtn,
+  #checklistBulkDeleteConfirmBtn {
+    width: 100%;
+  }
+
+  #checklistBulkDeleteCancelBtn {
+    grid-column: 1;
+  }
+
+  #checklistBulkDeleteConfirmBtn {
+    grid-column: 2;
+  }
+}
+
+
+/* ============================================================
+   V1.53 — Barcode/Product Data Manager
+   ============================================================ */
+.barcode-manual-register {
+  margin-top: 12px;
+}
+
+.barcode-manual-form {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-barcode-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f7f9f7;
+}
+
+.admin-barcode-form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-barcode-form label > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.admin-barcode-name-field {
+  grid-column: 1 / -1;
+}
+
+.admin-barcode-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.admin-barcode-search-block {
+  margin-top: 4px;
+}
+
+.admin-barcode-data-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.admin-barcode-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-barcode-row-info {
+  min-width: 0;
+}
+
+.admin-barcode-value {
+  margin-bottom: 4px;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.admin-barcode-row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .admin-barcode-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-barcode-name-field,
+  .admin-barcode-form-actions {
+    grid-column: 1;
+  }
+
+  .admin-barcode-form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-barcode-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-barcode-row-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-barcode-row-actions button {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   V1.54 — Admin tool navigation + in-place barcode scanner
+   ============================================================ */
+.admin-menu-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+}
+
+.admin-menu-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-menu-copy strong {
+  font-size: 16px;
+}
+
+.admin-menu-copy small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.admin-menu-arrow {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.admin-detail-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.admin-detail-head h2 {
+  margin-top: 0;
+}
+
+.admin-back-btn {
+  min-width: 78px;
+}
+
+.admin-inline-scanner {
+  margin-bottom: 14px;
+}
+
+.admin-barcode-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-barcode-input-row input {
+  min-width: 0;
+}
+
+.admin-mapping-mode-text {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-barcode-row {
+  cursor: pointer;
+}
+
+.admin-barcode-row:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+#adminScannerWrap {
+  margin-bottom: 10px;
+}
+
+#adminReader video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 560px) {
+  .admin-detail-head {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .admin-detail-head h2 {
+    font-size: 20px;
+  }
+
+  .admin-back-btn {
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .admin-barcode-input-row {
+    grid-template-columns: minmax(0, 1fr) 82px;
+  }
+}
+
+
+/* ============================================================
+   V1.55 — delegated daily managers + Process Pending
+   ============================================================ */
+.admin-menu-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-menu-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-menu-badge {
+  min-width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.history-removed-by {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--danger);
+}
+
+.checklist-removal-pending {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff3cd;
+  color: #6a4b00;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.process-pending-summary {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.process-pending-list {
+  display: grid;
+  gap: 12px;
+}
+
+.process-pending-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.process-pending-type {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1f3f2;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.process-pending-requester {
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.process-pending-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .process-pending-card {
+    grid-template-columns: 1fr;
+  }
+
+  .process-pending-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .process-pending-actions button {
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   V1.56 — Admin scanner full-screen fix
+   The scanner engine moves its overlay under <body>. Therefore the admin
+   scanner must have the same fixed full-screen rules as the main scanner.
+   ============================================================ */
+#adminScannerWrap:not(.hidden) {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+#adminScannerWrap.hidden {
+  display: none !important;
+}
+
+#adminScannerWrap #adminReader {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0 !important;
+  border-radius: 0;
+  background: #000;
+}
+
+#adminScannerWrap #adminReader video {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: cover;
+  background: #000;
+}
+
+#adminScannerWrap .barcode-guide {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: clamp(100px, 24dvh, 180px);
+  border: 2px solid rgba(255, 255, 255, .9);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#adminScannerWrap .barcode-guide span {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 2px;
+  background: #ff3b30;
+  box-shadow: 0 0 8px rgba(255, 59, 48, .8);
+}
+
+#adminScannerWrap .scan-status {
+  position: absolute;
+  z-index: 3;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 16px;
+  right: 16px;
+  padding: 12px;
+  color: #fff;
+  background: rgba(0, 0, 0, .7);
+  border-radius: 10px;
+  pointer-events: none;
+  font-size: 14px;
+}
+
+#adminScannerWrap #adminStopScannerBtn {
+  position: absolute;
+  z-index: 4;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  width: auto;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #fff;
+  color: #fff;
+  background: rgba(0, 0, 0, .75);
+}
+
+.admin-barcode-input-row #adminScanBarcodeBtn {
+  min-width: 82px;
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   V1.57 — Team Chat
+   ============================================================ */
+.chat-card {
+  min-height: calc(100dvh - 170px);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 12px;
+}
+
+.chat-section-head {
+  flex: 0 0 auto;
+}
+
+.chat-messages {
+  flex: 1 1 auto;
+  min-height: 260px;
+  max-height: calc(100dvh - 330px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 2px 14px;
+  scroll-behavior: smooth;
+}
+
+.chat-date-separator {
+  width: max-content;
+  max-width: 90%;
+  margin: 14px auto 10px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eef1ef;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.chat-message {
+  display: flex;
+  margin: 8px 0;
+}
+
+.chat-message.own {
+  justify-content: flex-end;
+}
+
+.chat-message.other {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: min(82%, 560px);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.chat-message.own .chat-bubble {
+  background: var(--soft);
+  border-color: rgba(0, 0, 0, .08);
+}
+
+.chat-message-meta {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 11px;
+}
+
+.chat-message-meta strong {
+  font-size: 12px;
+}
+
+.chat-message-meta span {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chat-message-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.chat-message-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 7px;
+}
+
+.chat-message-actions .text-button {
+  padding: 0;
+  min-height: 28px;
+  font-size: 12px;
+}
+
+.chat-delete-button {
+  color: var(--danger) !important;
+}
+
+.chat-compose {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+
+.chat-compose textarea {
+  width: 100%;
+  min-height: 46px;
+  max-height: 120px;
+  resize: none;
+  overflow-y: auto;
+  font: inherit;
+  line-height: 1.35;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.chat-send-btn {
+  min-width: 72px;
+  min-height: 46px;
+}
+
+@media (max-width: 430px) {
+  .bottom-nav button {
+    min-width: 0;
+  }
+
+  .bottom-nav button span {
+    font-size: 18px;
+  }
+
+  .bottom-nav button small {
+    font-size: 9px;
+  }
+
+  .nav-badge {
+    right: 8%;
+  }
+
+  .chat-card {
+    min-height: calc(100dvh - 150px);
+  }
+
+  .chat-messages {
+    max-height: calc(100dvh - 300px);
+  }
+
+  .chat-bubble {
+    max-width: 88%;
+  }
+}
+
+
+/* ============================================================
+   V1.58 — Roster Scheduler
+   ============================================================ */
+.roster-card {
+  overflow: visible;
+}
+
+.roster-date-bar {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 10px;
+  align-items: center;
+}
+
+.roster-date-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#rosterDateDisplay {
+  width: 100%;
+  min-width: 0;
+  padding: 0 10px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.roster-date-control input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100%;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.roster-date-control input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.roster-top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 10px 0 14px;
+}
+
+.roster-view-toggle {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.roster-shift-form-wrap {
+  margin: 12px 0 16px;
+}
+
+.roster-shift-form {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f7f9f7;
+}
+
+.roster-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roster-shift-form label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.roster-shift-form label > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.roster-time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.roster-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.roster-scheduler {
+  min-width: 0;
+}
+
+.roster-scheduler-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.roster-scheduler-grid {
+  --roster-name-width: 112px;
+  --roster-hour-width: 52px;
+  display: grid;
+  grid-template-columns:
+    var(--roster-name-width)
+    calc(var(--roster-hour-width) * 24);
+  min-width: calc(var(--roster-name-width) + var(--roster-hour-width) * 24);
+}
+
+.roster-scheduler-corner,
+.roster-member-name {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-right: 1px solid var(--line);
+  background: #f7f9f7;
+  font-weight: 900;
+}
+
+.roster-scheduler-corner {
+  top: 0;
+  min-height: 44px;
+  z-index: 6;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.roster-time-header {
+  position: relative;
+  min-height: 44px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f9f7;
+}
+
+.roster-time-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.roster-time-label:first-child {
+  transform: translate(0, -50%);
+}
+
+.roster-time-label:last-child {
+  transform: translate(-100%, -50%);
+}
+
+.roster-member-name {
+  min-height: 66px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.roster-time-track {
+  position: relative;
+  min-height: 66px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.roster-hour-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e8ece9;
+  pointer-events: none;
+}
+
+.roster-shift-block {
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  z-index: 2;
+  min-width: 34px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--soft);
+  color: var(--ink);
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.roster-shift-block strong,
+.roster-shift-block span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-shift-block strong {
+  font-size: 12px;
+}
+
+.roster-shift-block span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.roster-shift-block:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+@media (max-width: 560px) {
+  .roster-date-bar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+
+  #rosterDateDisplay {
+    font-size: 15px;
+    padding: 0 6px;
+  }
+
+  .roster-top-actions {
+    align-items: stretch;
+  }
+
+  .roster-view-toggle {
+    width: 100%;
+    order: 3;
+    margin-left: 0;
+  }
+
+  .roster-view-toggle button {
+    flex: 1;
+  }
+
+  #rosterAddShiftBtn {
+    margin-left: auto;
+  }
+
+  .roster-time-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .roster-form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .roster-form-actions button {
+    width: 100%;
+  }
+
+  .roster-scheduler-grid {
+    --roster-name-width: 96px;
+    --roster-hour-width: 48px;
+  }
+
+  .roster-scheduler-corner,
+  .roster-member-name {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .roster-member-name {
+    font-size: 12px;
+  }
+}
+
+
+/* ============================================================
+   V1.60 — Roster calendar shift dots + current-week highlight
+   ============================================================ */
+.roster-calendar-shell {
+  position: relative;
+  min-width: 0;
+}
+
+.roster-date-control {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--ink);
+  font: inherit;
+}
+
+.roster-calendar-caret {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.roster-calendar-panel {
+  position: absolute;
+  z-index: 35;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(360px, calc(100vw - 28px));
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.roster-calendar-panel.hidden {
+  display: none !important;
+}
+
+.roster-calendar-head {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#rosterCalendarMonthLabel {
+  text-align: center;
+  font-size: 15px;
+}
+
+.roster-calendar-weekdays,
+.roster-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.roster-calendar-weekdays {
+  margin-bottom: 4px;
+}
+
+.roster-calendar-weekdays span {
+  padding: 5px 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.roster-calendar-day {
+  position: relative;
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px 2px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+}
+
+.roster-calendar-day.outside-month {
+  color: #a8afaa;
+}
+
+.roster-calendar-day.current-week {
+  background: #eef4ef;
+}
+
+.roster-calendar-day.today .roster-calendar-day-number {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.roster-calendar-day.selected {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+  background: var(--soft);
+}
+
+.roster-calendar-day-number {
+  display: block;
+  line-height: 26px;
+}
+
+.roster-calendar-shift-dot {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 7px;
+  height: 7px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--brand);
+}
+
+.roster-calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.roster-calendar-legend span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.roster-legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--brand);
+}
+
+.roster-legend-week {
+  width: 16px;
+  height: 12px;
+  border-radius: 4px;
+  background: #eef4ef;
+  border: 1px solid var(--line);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .roster-calendar-day:hover {
+    background: #f1f4f2;
+  }
+
+  .roster-calendar-day.current-week:hover {
+    background: #e5eee7;
+  }
+}
+
+@media (max-width: 430px) {
+  .roster-calendar-panel {
+    width: min(338px, calc(100vw - 20px));
+    padding: 10px;
+  }
+
+  .roster-calendar-day {
+    min-height: 42px;
+  }
+}
+
+
+/* ============================================================
+   V1.61 — Daily / Weekly roster entry
+   ============================================================ */
+.roster-shift-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.roster-weekly-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.roster-weekly-head {
+  display: grid;
+  gap: 3px;
+}
+
+.roster-weekly-days {
+  display: grid;
+  gap: 8px;
+}
+
+.roster-weekly-day-row {
+  display: grid;
+  grid-template-columns: minmax(105px, 1fr) minmax(105px, .9fr) minmax(105px, .9fr);
+  gap: 8px;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.roster-weekly-day-row.disabled {
+  opacity: .55;
+  background: #f5f6f5;
+}
+
+.roster-weekly-day-toggle {
+  display: flex !important;
+  grid-template-columns: none !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 9px !important;
+  min-height: 44px;
+}
+
+.roster-weekly-day-toggle input {
+  width: 21px;
+  height: 21px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.roster-weekly-day-toggle > span {
+  display: grid;
+  gap: 1px;
+  color: var(--ink) !important;
+  font-size: inherit !important;
+}
+
+.roster-weekly-day-toggle strong {
+  font-size: 13px;
+}
+
+.roster-weekly-day-toggle small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.roster-weekly-time {
+  display: grid;
+  gap: 5px;
+}
+
+.roster-weekly-time input {
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .roster-weekly-day-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .roster-weekly-day-toggle {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 360px) {
+  .roster-weekly-day-row {
+    grid-template-columns: 1fr;
+  }
+
+  .roster-weekly-day-toggle {
+    grid-column: 1;
+  }
+}
+
+
+/* ============================================================
+   V1.62 — This Week overview + compact no-slide daily roster
+   ============================================================ */
+.roster-head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.roster-week-button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.roster-week-button.active {
+  background: var(--soft);
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.roster-week-overview {
+  margin-top: 6px;
+}
+
+.roster-week-overview-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.roster-week-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.roster-week-day-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.roster-week-day-card.today {
+  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+
+.roster-week-day-head {
+  display: grid;
+  gap: 1px;
+  padding: 8px 5px;
+  border-bottom: 1px solid var(--line);
+  background: #f7f9f7;
+  text-align: center;
+}
+
+.roster-week-day-head strong {
+  font-size: 12px;
+}
+
+.roster-week-day-head span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.roster-week-day-shifts {
+  display: grid;
+  gap: 5px;
+  padding: 5px;
+}
+
+.roster-week-shift-row {
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  padding: 6px 5px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--soft);
+  color: var(--ink);
+  text-align: left;
+}
+
+.roster-week-shift-row:disabled {
+  opacity: 1;
+}
+
+.roster-week-shift-row strong,
+.roster-week-shift-row span,
+.roster-week-shift-row small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-week-shift-row strong {
+  font-size: 10px;
+}
+
+.roster-week-shift-time {
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.roster-week-shift-row small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.roster-week-empty {
+  padding: 15px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Fit the daily timeline into the available width instead of requiring slide. */
+.roster-scheduler-scroll {
+  overflow-x: hidden;
+}
+
+.roster-scheduler-grid {
+  --roster-name-width: 104px;
+  --roster-hour-width: auto;
+  grid-template-columns: var(--roster-name-width) minmax(0, 1fr);
+  min-width: 0;
+  width: 100%;
+}
+
+.roster-member-name {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.roster-member-name strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.roster-member-time {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.roster-time-header,
+.roster-time-track {
+  min-width: 0;
+}
+
+.roster-time-label {
+  font-size: 9px;
+}
+
+.roster-shift-block {
+  padding: 5px 6px;
+}
+
+.roster-shift-block strong {
+  font-size: 10px;
+}
+
+.roster-shift-block span {
+  font-size: 9px;
+}
+
+@media (max-width: 700px) {
+  .roster-week-overview-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .roster-week-day-head {
+    padding: 6px 2px;
+  }
+
+  .roster-week-day-head strong {
+    font-size: 10px;
+  }
+
+  .roster-week-day-head span {
+    font-size: 8px;
+  }
+
+  .roster-week-day-shifts {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .roster-week-shift-row {
+    min-height: 50px;
+    padding: 5px 3px;
+  }
+
+  .roster-week-shift-row strong,
+  .roster-week-shift-time {
+    font-size: 8px;
+  }
+
+  .roster-week-shift-row small {
+    display: none;
+  }
+
+  .roster-scheduler-grid {
+    --roster-name-width: 88px;
+  }
+
+  .roster-time-label {
+    font-size: 8px;
+  }
+
+  .roster-member-name {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .roster-member-name strong {
+    font-size: 11px;
+  }
+
+  .roster-member-time {
+    font-size: 9px;
+  }
+
+  .roster-shift-block {
+    padding: 4px;
+  }
+
+  .roster-shift-block strong {
+    font-size: 9px;
+  }
+
+  .roster-shift-block span {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 430px) {
+  .roster-head-actions {
+    gap: 5px;
+  }
+
+  .roster-week-button {
+    min-height: 40px;
+    padding-left: 9px;
+    padding-right: 9px;
+    font-size: 12px;
+  }
+
+  .roster-week-overview-head {
+    align-items: flex-start;
+  }
+
+  .roster-week-overview-grid {
+    gap: 2px;
+  }
+
+  .roster-week-day-card {
+    border-radius: 8px;
+  }
+
+  .roster-week-day-head {
+    padding: 5px 1px;
+  }
+
+  .roster-week-day-head strong {
+    font-size: 9px;
+  }
+
+  .roster-week-day-head span {
+    font-size: 7px;
+  }
+
+  .roster-week-day-shifts {
+    padding: 2px;
+  }
+
+  .roster-week-shift-row {
+    min-height: 45px;
+    padding: 4px 2px;
+    border-radius: 6px;
+  }
+
+  .roster-week-shift-row strong,
+  .roster-week-shift-time {
+    font-size: 7px;
+  }
+
+  .roster-scheduler-grid {
+    --roster-name-width: 82px;
+  }
+}
+
+
+/* ============================================================
+   V1.63 — Weekly roster fits at a glance + explicit Daily toggle
+   ============================================================ */
+.roster-view-mode-toggle {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.roster-view-mode-toggle .secondary {
+  min-height: 44px;
+  padding-left: 12px;
+  padding-right: 12px;
+  white-space: nowrap;
+}
+
+.roster-view-mode-toggle .secondary.active {
+  background: var(--soft);
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.roster-week-overview {
+  min-width: 0;
+}
+
+.roster-week-overview-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+
+.roster-week-day-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.roster-week-day-row.today {
+  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+
+.roster-week-day-row .roster-week-day-head {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 5px;
+  border-right: 1px solid var(--line);
+  border-bottom: 0;
+  background: #f7f9f7;
+  text-align: center;
+}
+
+.roster-week-day-row .roster-week-day-head strong {
+  font-size: 13px;
+}
+
+.roster-week-day-row .roster-week-day-head span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.roster-week-day-row .roster-week-day-shifts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 5px;
+  min-width: 0;
+  padding: 5px;
+}
+
+.roster-week-day-row .roster-week-shift-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--soft);
+  color: var(--ink);
+  text-align: left;
+}
+
+.roster-week-day-row .roster-week-shift-row:disabled {
+  opacity: 1;
+}
+
+.roster-week-shift-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  align-items: baseline;
+}
+
+.roster-week-shift-main strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.roster-week-day-row .roster-week-shift-time {
+  flex: 0 0 auto;
+  margin-top: 0;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.roster-week-day-row .roster-week-shift-row small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.roster-week-day-row .roster-week-empty {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+@media (max-width: 560px) {
+  .roster-head-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 6px;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .roster-view-mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-width: 0;
+  }
+
+  .roster-view-mode-toggle .secondary {
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .roster-week-day-row {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .roster-week-day-row .roster-week-day-head {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+
+  .roster-week-day-row .roster-week-day-head strong {
+    font-size: 11px;
+  }
+
+  .roster-week-day-row .roster-week-day-head span {
+    font-size: 9px;
+  }
+
+  .roster-week-day-row .roster-week-day-shifts {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .roster-week-day-row .roster-week-shift-row {
+    min-height: 44px;
+    padding: 6px 7px;
+  }
+
+  .roster-week-shift-main strong {
+    font-size: 11px;
+  }
+
+  .roster-week-day-row .roster-week-shift-time {
+    font-size: 10px;
+  }
+
+  .roster-week-day-row .roster-week-shift-row small {
+    font-size: 8px;
+  }
+}
+
+
+/* ============================================================
+   V1.64 — Keep Daily / This Week / Refresh in one top row
+   ============================================================ */
+.roster-card > .section-head {
+  align-items: center;
+}
+
+.roster-head-actions {
+  display: flex !important;
+  flex: 0 0 auto;
+  width: auto !important;
+  margin-top: 0 !important;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.roster-view-mode-toggle {
+  display: inline-flex !important;
+  grid-template-columns: none !important;
+  gap: 5px;
+  min-width: 0;
+}
+
+.roster-view-mode-toggle .secondary {
+  min-width: 0;
+  min-height: 42px;
+  padding-left: 10px;
+  padding-right: 10px;
+  font-size: 12px;
+}
+
+#refreshRosterBtn {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+}
+
+@media (max-width: 560px) {
+  .roster-card > .section-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .roster-card > .section-head > div:first-child {
+    min-width: 0;
+  }
+
+  .roster-card > .section-head h2 {
+    font-size: 20px;
+  }
+
+  .roster-card > .section-head p {
+    display: none;
+  }
+
+  .roster-head-actions {
+    justify-self: end;
+  }
+
+  .roster-view-mode-toggle .secondary {
+    min-height: 40px;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 11px;
+  }
+
+  #refreshRosterBtn {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 380px) {
+  .roster-card > .section-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .roster-card > .section-head > div:first-child {
+    display: none;
+  }
+
+  .roster-head-actions {
+    grid-column: 1 / -1;
+    width: 100% !important;
+    justify-content: stretch;
+  }
+
+  .roster-view-mode-toggle {
+    flex: 1 1 auto;
+  }
+
+  .roster-view-mode-toggle .secondary {
+    flex: 1 1 0;
+  }
+}
+
+
+/* ============================================================
+   V1.66 — Bottom navigation fit / text clipping fix
+   ============================================================ */
+.bottom-nav {
+  gap: 2px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.bottom-nav button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  padding-left: 2px;
+  padding-right: 2px;
+  overflow: visible;
+}
+
+.bottom-nav button span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bottom-nav button small {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 1px;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 9px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.nav-badge {
+  right: 4%;
+}
+
+@media (max-width: 430px) {
+  .bottom-nav {
+    padding-left: 2px;
+    padding-right: 2px;
+    gap: 1px;
+  }
+
+  .bottom-nav button {
+    min-height: 52px;
+    border-radius: 10px;
+  }
+
+  .bottom-nav button span {
+    font-size: 17px;
+  }
+
+  .bottom-nav button small {
+    font-size: 8px;
+    letter-spacing: -0.03em;
+  }
+}
+
+@media (max-width: 360px) {
+  .bottom-nav button span {
+    font-size: 16px;
+  }
+
+  .bottom-nav button small {
+    font-size: 7px;
+  }
+
+  .nav-badge {
+    transform: scale(.9);
+    transform-origin: top right;
+  }
+}
+
+
+/* ============================================================
+   V1.67 — Chat stays inside one screen
+   Only the message list scrolls. Header, composer and bottom nav stay put.
+   ============================================================ */
+.app-shell.chat-mode {
+  height: 100dvh;
+  min-height: 0;
+  max-height: 100dvh;
+  padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.app-shell.chat-mode .topbar {
+  position: relative;
+  top: auto;
+  flex: 0 0 auto;
+}
+
+.app-shell.chat-mode #screen-chat.active {
+  display: flex;
+  width: min(100%, 760px);
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 8px 10px 6px;
+  overflow: hidden;
+}
+
+.app-shell.chat-mode .chat-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.app-shell.chat-mode .chat-section-head {
+  min-height: 0;
+  margin-bottom: 6px;
+}
+
+.app-shell.chat-mode .chat-section-head .muted {
+  display: none;
+}
+
+.app-shell.chat-mode .chat-messages {
+  min-height: 0;
+  max-height: none;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 8px;
+  scroll-behavior: smooth;
+}
+
+.app-shell.chat-mode .chat-compose {
+  position: relative;
+  bottom: auto;
+  min-width: 0;
+  padding-top: 8px;
+  padding-bottom: 0;
+  background: var(--card);
+}
+
+.app-shell.chat-mode .chat-compose textarea {
+  min-width: 0;
+  min-height: 44px;
+  max-height: 96px;
+}
+
+.app-shell.chat-mode .chat-send-btn {
+  min-height: 44px;
+}
+
+/* Prevent focus/keyboard interactions from creating a document-level scroll. */
+.app-shell.chat-mode,
+.app-shell.chat-mode #screen-chat,
+.app-shell.chat-mode .chat-card {
+  overscroll-behavior: none;
+}
+
+@media (max-width: 430px) {
+  .app-shell.chat-mode {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+
+  .app-shell.chat-mode #screen-chat.active {
+    padding: 6px;
+  }
+
+  .app-shell.chat-mode .chat-card {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .app-shell.chat-mode .chat-section-head {
+    margin-bottom: 4px;
+  }
+
+  .app-shell.chat-mode .chat-section-head h2 {
+    font-size: 17px;
+  }
+
+  .app-shell.chat-mode .chat-compose {
+    gap: 6px;
+  }
+
+  .app-shell.chat-mode .chat-send-btn {
+    min-width: 64px;
+  }
+}
+
+
+/* ============================================================
+   V1.68 — Chat: ONLY message history may scroll
+   Lock the document itself while Chat is active.
+   ============================================================ */
+html.chat-screen-lock,
+body.chat-screen-lock {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+body.chat-screen-lock {
+  position: fixed;
+  inset: 0;
+}
+
+body.chat-screen-lock #appShell {
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden !important;
+}
+
+body.chat-screen-lock #screen-chat.active,
+body.chat-screen-lock .chat-card,
+body.chat-screen-lock .chat-compose,
+body.chat-screen-lock .topbar {
+  overflow: hidden;
+}
+
+body.chat-screen-lock .chat-messages {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  min-height: 0;
+  max-height: none;
+}
+
+/* Composer never becomes a second scrolling area. */
+body.chat-screen-lock .chat-compose textarea {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+
+/* ============================================================
+   V1.69 — Run item 7–8 digit ticket barcode
+   ============================================================ */
+.run-ticket-barcode {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  align-items: baseline;
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+.run-ticket-barcode span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.run-ticket-barcode strong {
+  color: var(--ink);
+  font-size: 13px;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ============================================================
+   V1.71 — Manual product registration when catalog has no row
+   ============================================================ */
+.manual-product-register {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f7f9f7;
+}
+
+.manual-product-register-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.manual-product-register .stack {
+  gap: 10px;
+}
+
+.manual-product-register label {
+  display: grid;
+  gap: 6px;
+}
+
+.manual-product-register label > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.manual-product-register input[readonly] {
+  background: #eef1ef;
+}
+
+
+/* ============================================================
+   V1.73 — Conditional manual product registration
+   ============================================================ */
+#barcodeManualRegisterLaunchBtn {
+  margin-top: 10px;
+}
+
+#barcodeManualRegisterPanel {
+  margin-top: 8px;
+}
+
+#barcodeManualRegisterPanel.hidden {
+  display: none !important;
+}
+
+
+/* ============================================================
+   V1.74 — General team: Search + Scan only
+   ============================================================ */
+.manager-product-add-tools.hidden {
+  display: none !important;
+}
+
+
+/* ============================================================
+   V1.75 — Product Code Lookup popup
+   ============================================================ */
+.scan-head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.product-lookup-launch {
+  min-height: 40px;
+  padding-left: 12px;
+  padding-right: 12px;
+  white-space: nowrap;
+}
+
+html.lookup-modal-open,
+body.lookup-modal-open {
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.lookup-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: max(14px, env(safe-area-inset-top))
+           12px
+           max(14px, env(safe-area-inset-bottom));
+}
+
+.lookup-modal.hidden {
+  display: none !important;
+}
+
+.lookup-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 22, 17, .48);
+  backdrop-filter: blur(3px);
+}
+
+.lookup-modal-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  width: min(680px, 100%);
+  max-height: min(760px, calc(100dvh - 28px));
+  min-height: 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .22);
+  overflow: hidden;
+}
+
+.lookup-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.lookup-modal-head h2 {
+  margin: 0 0 3px;
+}
+
+.lookup-modal-head p {
+  margin: 0;
+}
+
+.lookup-search-block {
+  margin-bottom: 10px;
+}
+
+.lookup-results {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.lookup-result-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.lookup-result-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.lookup-result-name {
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.lookup-data-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  padding-top: 5px;
+}
+
+.lookup-data-row span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lookup-data-row strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lookup-data-row .lookup-missing {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+@media (max-width: 560px) {
+  .scan-build-head {
+    align-items: flex-start;
+  }
+
+  .scan-head-actions {
+    display: grid;
+    justify-items: end;
+  }
+
+  .product-lookup-launch {
+    min-height: 36px;
+    padding-left: 9px;
+    padding-right: 9px;
+    font-size: 11px;
+  }
+
+  .lookup-modal {
+    place-items: stretch;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .lookup-modal-card {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 16px;
+  }
+
+  .lookup-modal-head h2 {
+    font-size: 20px;
+  }
+
+  .lookup-modal-head p {
+    font-size: 12px;
+  }
+
+  .lookup-data-row {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+}
+
+
+/* ============================================================
+   V1.76 — Product Code Lookup fit + tappable barcode detail
+   ============================================================ */
+.product-lookup-launch {
+  width: 100%;
+  min-height: 46px;
+  margin: 0 0 14px;
+  padding: 0 14px;
+  white-space: normal;
+  text-align: center;
+}
+
+.scan-build-head .count-badge {
+  flex: 0 0 auto;
+}
+
+.lookup-result-button {
+  display: block;
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lookup-open-hint {
+  margin-top: 9px;
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.lookup-detail {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lookup-detail.hidden {
+  display: none !important;
+}
+
+.lookup-back-btn {
+  margin-bottom: 10px;
+}
+
+.lookup-detail-product {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.lookup-detail-product h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.lookup-detail-barcodes {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.lookup-barcode-card {
+  padding: 14px 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+}
+
+.lookup-barcode-label {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.lookup-barcode-svg {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: 112px;
+  margin: 0 auto;
+  background: white;
+}
+
+.lookup-barcode-value {
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  font-variant-numeric: tabular-nums;
+}
+
+.lookup-no-barcode {
+  display: grid;
+  gap: 5px;
+  padding: 18px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: #f7f9f7;
+  text-align: center;
+}
+
+.lookup-no-barcode span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 560px) {
+  .product-lookup-launch {
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  .lookup-barcode-svg {
+    height: 96px;
+  }
+
+  .lookup-barcode-value {
+    font-size: 20px;
+  }
+}
+
+
+/* ============================================================
+   V2.0.2 — GCFR visual refresh
+   ============================================================ */
+
+:root {
+  --bg: #eef3ef;
+  --card: rgba(255,255,255,.96);
+  --ink: #102017;
+  --muted: #65746a;
+  --line: #d8e3db;
+  --brand: #123d29;
+  --brand-2: #236a45;
+  --soft: #e5f0e8;
+  --radius: 22px;
+  --shadow: 0 12px 34px rgba(20,61,42,.08);
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at 15% -5%, rgba(55,132,88,.11), transparent 29rem),
+    linear-gradient(180deg, #f4f8f5 0%, #eef3ef 42%, #edf2ee 100%);
+}
+
+body {
+  color: var(--ink);
+}
+
+.app-shell {
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+  min-height: 72px;
+  background: rgba(246,249,247,.84);
+  border-bottom: 1px solid rgba(205,220,210,.72);
+  box-shadow: 0 6px 22px rgba(20,61,42,.045);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+}
+
+.eyebrow {
+  color: var(--brand-2);
+  letter-spacing: .12em;
+}
+
+.topbar h1 {
+  font-size: 22px;
+  letter-spacing: -.025em;
+}
+
+.user-pill {
+  background: rgba(255,255,255,.84);
+  border-color: rgba(199,215,204,.82);
+  box-shadow: 0 4px 14px rgba(20,61,42,.055);
+}
+
+.icon-button {
+  background: rgba(255,255,255,.9);
+  border-color: rgba(199,215,204,.9);
+  box-shadow: 0 5px 15px rgba(20,61,42,.055);
+}
+
+.screen {
+  width: min(100%, 780px);
+  padding-top: 16px;
+}
+
+.card {
+  border: 1px solid rgba(205,220,210,.88);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.95);
+  box-shadow: var(--shadow);
+}
+
+.card h2,
+.card h3,
+.section-head h2 {
+  letter-spacing: -.025em;
+}
+
+.section-head {
+  margin-bottom: 16px;
+}
+
+input,
+select,
+textarea,
+.search-input {
+  border: 1px solid #cedbd2;
+  border-radius: 14px;
+  background: rgba(255,255,255,.97);
+  color: var(--ink);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.search-input:focus {
+  outline: none;
+  border-color: #5c9875;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(54,128,84,.12);
+}
+
+.primary,
+.secondary,
+.scan-button {
+  border-radius: 14px;
+  transition: transform .12s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.primary,
+.scan-button {
+  background: linear-gradient(135deg, #123d29 0%, #236a45 100%);
+  box-shadow: 0 9px 22px rgba(20,76,48,.18);
+}
+
+.secondary {
+  background: #edf3ef;
+  border: 1px solid #d9e4dc;
+  color: #193426;
+}
+
+.primary:active,
+.secondary:active,
+.scan-button:active,
+.icon-button:active {
+  transform: scale(.985);
+}
+
+.scan-button {
+  min-height: 68px;
+  font-size: 17px;
+  letter-spacing: -.01em;
+}
+
+.count-badge {
+  background: linear-gradient(135deg, #143f2b, #2b754d);
+  box-shadow: 0 5px 14px rgba(20,76,48,.18);
+}
+
+.list-row,
+.run-card,
+.run-item,
+.request-card {
+  border-color: #dce6df;
+  background: rgba(255,255,255,.92);
+}
+
+.run-card {
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(20,61,42,.045);
+}
+
+.run-head {
+  background: linear-gradient(180deg, #f4f8f5, #edf4ef);
+}
+
+.bottom-nav {
+  left: max(8px, env(safe-area-inset-left));
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  width: auto;
+  min-height: 68px;
+  padding: 6px;
+  border: 1px solid rgba(194,212,199,.88);
+  border-radius: 22px;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 14px 38px rgba(18,61,41,.17);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  overflow: visible;
+}
+
+.bottom-nav button {
+  min-height: 56px;
+  max-width: none;
+  border-radius: 16px;
+  color: #748079;
+  transition: background .15s ease, color .15s ease, transform .12s ease;
+}
+
+.bottom-nav button span {
+  font-size: 19px;
+}
+
+.bottom-nav button small {
+  font-size: 10px;
+  letter-spacing: .01em;
+}
+
+.bottom-nav button.active {
+  color: #123d29;
+  background: linear-gradient(180deg, #e5f1e8, #dcece1);
+  box-shadow: inset 0 0 0 1px rgba(67,126,86,.08);
+}
+
+.bottom-nav button:active {
+  transform: scale(.97);
+}
+
+.toast {
+  bottom: calc(94px + env(safe-area-inset-bottom));
+  border-radius: 16px;
+  background: rgba(16,32,23,.94);
+  box-shadow: 0 14px 36px rgba(0,0,0,.2);
+  backdrop-filter: blur(12px);
+}
+
+.auth-card {
+  border-color: rgba(205,220,210,.9);
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 22px 60px rgba(20,61,42,.12);
+}
+
+.logo-mark {
+  background: linear-gradient(145deg, #123d29, #2b754d);
+  box-shadow: 0 10px 24px rgba(20,76,48,.22);
+}
+
+.segmented {
+  background: #eaf1ec;
+}
+
+.segmented button.active {
+  box-shadow: 0 5px 14px rgba(20,61,42,.08);
+}
+
+.more-tile {
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,250,247,.96));
+  box-shadow: 0 8px 20px rgba(20,61,42,.06);
+  transition: transform .14s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.more-tile:active {
+  transform: scale(.985);
+}
+
+@media (hover:hover) {
+  .more-tile:hover {
+    transform: translateY(-2px);
+    border-color: #bfd2c4;
+    box-shadow: 0 12px 26px rgba(20,61,42,.09);
+  }
+}
+
+@media (max-width: 430px) {
+  .screen {
+    padding-top: 12px;
+  }
+
+  .card {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .bottom-nav {
+    left: max(5px, env(safe-area-inset-left));
+    right: max(5px, env(safe-area-inset-right));
+    bottom: max(5px, env(safe-area-inset-bottom));
+    border-radius: 19px;
+  }
+
+  .bottom-nav button {
+    border-radius: 14px;
+  }
+}
