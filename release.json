@@ -1,9 +1,10 @@
 {
-  "previous": "v2.2.4",
-  "current": "v2.2.5",
+  "previous": "v2.2.5",
+  "current": "v2.2.6",
   "patching": null,
   "status": "stable",
   "history": [
+    "v2.2.6",
     "v2.2.5",
     "v2.2.4",
     "v2.2.3",
@@ -63,5 +64,5 @@
     "v1.26",
     "v1.25"
   ],
-  "updated_at": "2026-09-22T19:06:41.711Z"
+  "updated_at": "2026-09-22T19:22:50.573Z"
 }
