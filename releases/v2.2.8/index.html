@@ -1075,6 +1075,27 @@
           </div>
         </div>
 
+        <div class="card stock-setup-data-card">
+          <div class="stock-section-head">
+            <div>
+              <h3>Saved Stock Data</h3>
+              <p class="muted">Stock type, weight, Store Ticket, Selling Barcode and Factory Code data.</p>
+            </div>
+            <button id="stockSetupDataRefreshBtn" class="secondary" type="button">Refresh</button>
+          </div>
+          <input
+            id="stockSetupDataSearch"
+            class="search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="Search product, Product Code or saved barcode"
+          >
+          <div id="stockSetupDataCount" class="item-sub"></div>
+          <div id="stockSetupDataList" class="stock-package-list">
+            <div class="empty-state">Loading stock data...</div>
+          </div>
+        </div>
+
         <div id="adminStockSelected" class="hidden">
           <div class="card stock-selected-card">
             <div class="stock-product-head">
