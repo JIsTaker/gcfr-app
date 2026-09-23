@@ -23,6 +23,7 @@ export function initGcfrV2Stock({
     pendingBarcodeMode: "",
     manualWeights: [],
     searchTimer: null,
+    setupData: [],
     scanMode: "backstock",
     weightMode: "product",
   };
@@ -341,6 +342,154 @@ export function initGcfrV2Stock({
     return rankProducts(catalog, rawQuery);
   }
 
+  function renderProfileSummary() {
+    const box = q("stockProfileSummary");
+    if (!box) return;
+
+    if (!state.profile) {
+      box.innerHTML = '<div class="stock-warning"><strong>No stock profile saved.</strong></div>';
+      return;
+    }
+
+    const type = state.profile.stock_type === "approx" ? "Approx" : "1 Each";
+    const weight = cleanNumber(state.profile.default_unit_weight_g);
+    box.innerHTML = `
+      <div class="stock-profile-ready">
+        <div>
+          <strong>${escapeHtml(type)}</strong>
+          <small>${state.profile.stock_type === "approx"
+            ? (weight ? `Default unit weight ${weight} g` : "No default unit weight")
+            : "Counted as individual units"}</small>
+        </div>
+      </div>
+    `;
+  }
+
+  async function fetchAllRows(table, columns) {
+    const rows = [];
+    let from = 0;
+    const pageSize = 1000;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from(table)
+        .select(columns)
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      const page = data || [];
+      rows.push(...page);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+
+    return rows;
+  }
+
+  function renderSetupData() {
+    const list = q("stockSetupDataList");
+    const count = q("stockSetupDataCount");
+    if (!list) return;
+
+    const query = normalizeText(q("stockSetupDataSearch")?.value || "");
+    const rows = (state.setupData || []).filter((row) => {
+      if (!query) return true;
+      return normalizeText([
+        row.name,
+        row.code,
+        row.stock_type,
+        row.default_unit_weight_g,
+        ...(row.barcodes || []).map((item) => item.barcode),
+        ...(row.packages || []).map((item) => item.factory_barcode),
+      ].join(" ")).includes(query);
+    });
+
+    if (count) count.textContent = `${rows.length} of ${state.setupData.length} products with stock data`;
+    list.innerHTML = "";
+
+    if (!rows.length) {
+      list.innerHTML = '<div class="empty-state">No saved stock data found.</div>';
+      return;
+    }
+
+    for (const row of rows) {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "stock-package-row stock-setup-data-row";
+
+      const type = row.stock_type === "approx" ? "Approx" : row.stock_type === "each" ? "1 Each" : "No type";
+      const weight = cleanNumber(row.default_unit_weight_g);
+      const codes = [
+        ...(row.barcodes || []).map((item) => `${item.barcode_type === "ticket_barcode" ? "Ticket" : item.barcode_type === "factory_barcode" ? "Factory" : "Selling"} ${item.barcode}`),
+        ...(row.packages || [])
+          .filter((item) => !(row.barcodes || []).some((b) => String(b.barcode) === String(item.factory_barcode)))
+          .map((item) => `Factory ${item.factory_barcode}`),
+      ];
+
+      card.innerHTML = `
+        <div>
+          <strong>${escapeHtml(row.name || row.code)}</strong>
+          <span>Product Code ${escapeHtml(row.code)} · ${escapeHtml(type)}${weight ? ` · ${weight} g` : ""}</span>
+          <small>${escapeHtml(codes.length ? codes.join(" · ") : "No linked barcode")}</small>
+        </div>
+        <div class="stock-package-actions"><span class="secondary">Open</span></div>
+      `;
+
+      card.onclick = () => selectForAdmin({ code: row.code, name: row.name || row.code });
+      list.appendChild(card);
+    }
+  }
+
+  async function refreshSetupData() {
+    const list = q("stockSetupDataList");
+    if (list) list.innerHTML = '<div class="empty-state">Loading stock data...</div>';
+
+    try {
+      const [catalog, profiles, packages, barcodeLinks] = await Promise.all([
+        loadCatalog(),
+        fetchAllRows("gcfr_stock_profiles", "product_code,stock_type,default_unit_weight_g,updated_at"),
+        fetchAllRows("gcfr_factory_packages", "id,factory_barcode,product_code,package_label,units_per_package,approx_weight_mode,fixed_package_weight_kg,updated_at"),
+        fetchAllRows("product_barcodes", "barcode,product_code,barcode_type"),
+      ]);
+
+      const byCode = new Map();
+      const productMap = new Map(catalog.map((product) => [String(product.code), product]));
+
+      const ensure = (code) => {
+        const key = String(code || "").trim();
+        if (!key) return null;
+        if (!byCode.has(key)) {
+          const product = productMap.get(key);
+          byCode.set(key, {
+            code: key,
+            name: product?.name || key,
+            stock_type: "",
+            default_unit_weight_g: null,
+            packages: [],
+            barcodes: [],
+          });
+        }
+        return byCode.get(key);
+      };
+
+      for (const profile of profiles) Object.assign(ensure(profile.product_code), profile);
+      for (const pack of packages) ensure(pack.product_code)?.packages.push(pack);
+      for (const link of barcodeLinks) {
+        if (!["product_code", "ticket_barcode", "factory_barcode"].includes(link.barcode_type)) continue;
+        ensure(link.product_code)?.barcodes.push(link);
+      }
+
+      state.setupData = [...byCode.values()]
+        .filter((row) => row.stock_type || row.packages.length || row.barcodes.length)
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      renderSetupData();
+    } catch (error) {
+      if (list) list.innerHTML = `<div class="empty-state">${escapeHtml(error.message || "Unable to load stock data.")}</div>`;
+      showToast(error.message || "Unable to load stock data.", 5000);
+    }
+  }
+
   async function selectForAdmin(product) {
     state.selectedProduct = {
       code: String(product.code || "").trim(),
@@ -365,6 +514,7 @@ export function initGcfrV2Stock({
     q("stockSetupBtn")?.classList.remove("hidden");
     q("stockAddPackageBtn")?.classList.toggle("hidden", !state.profile);
 
+    renderProfileSummary();
     openProfileSetup(false);
     renderBarcodeLinks();
     renderPackages();
@@ -449,7 +599,9 @@ export function initGcfrV2Stock({
 
     showToast("Product stock type saved.");
     await loadProfileAndPackages(false);
+    renderProfileSummary();
     q("stockAddPackageBtn")?.classList.remove("hidden");
+    void refreshSetupData();
 
     if (state.pendingBarcodeMode === "factory" && state.pendingBarcode) {
       openPackageEditor({ factory_barcode: state.pendingBarcode });
@@ -682,6 +834,8 @@ export function initGcfrV2Stock({
     showToast("Factory Code package saved.");
     await loadProfileAndPackages(false);
     renderPackages();
+    renderBarcodeLinks();
+    void refreshSetupData();
 
     const saved = state.packages.find((row) => row.factory_barcode === barcode);
     if (saved) state.selectedPackageId = saved.id;
@@ -1277,6 +1431,7 @@ export function initGcfrV2Stock({
     const name = state.selectedProduct.name;
     await loadProfileAndPackages(false);
     renderBarcodeLinks();
+    void refreshSetupData();
     closeUnknownBarcode();
     showToast(`${isTicket ? "Store Ticket" : "Selling Barcode"} linked to ${name}.`);
   }
@@ -1548,6 +1703,9 @@ export function initGcfrV2Stock({
     q(id)?.addEventListener("input", recalc);
   });
 
+  q("stockSetupDataSearch")?.addEventListener("input", renderSetupData);
+  q("stockSetupDataRefreshBtn")?.addEventListener("click", refreshSetupData);
+
   q("stockUseProductWeight")?.addEventListener("change", syncWeightMode);
   q("stockUseManualWeight")?.addEventListener("change", syncWeightMode);
   state.scanMode = "";
@@ -1561,5 +1719,6 @@ export function initGcfrV2Stock({
     handleAdminBarcode,
     searchForAdmin,
     selectForAdmin,
+    refreshSetupData,
   };
 }
