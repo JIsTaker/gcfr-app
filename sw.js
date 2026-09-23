@@ -50,7 +50,10 @@ async function cacheRelease(version) {
     atScope(`${base}app.js`),
     atScope(`${base}styles.css`),
     atScope(`${base}barcode-scanner.js`),
-    atScope(`${base}stock.js`)
+    atScope(`${base}stock.js`),
+    atScope(`${base}stock.css`),
+    atScope(`${base}vendor/zxing-reader.js`),
+    atScope(`${base}vendor/zxing_reader.wasm`)
   ]);
 }
 
