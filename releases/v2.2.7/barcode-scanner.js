@@ -402,6 +402,52 @@ export function createBarcodeScanner({
       }
     }
 
+    if (mode === "thinBars1" || mode === "thinBars2") {
+      const width = imageData.width;
+      const height = imageData.height;
+      const radius = mode === "thinBars2" ? 2 : 1;
+      const source = new Uint8ClampedArray(data);
+
+      // First binarize conservatively, then restore narrow white gaps that
+      // thermal ink spread has partially closed. A black output pixel survives
+      // only when its horizontal neighbours are also black.
+      let total = 0;
+      let samples = 0;
+      for (let i = 0; i < source.length; i += 16) {
+        total += source[i] * 0.299 + source[i + 1] * 0.587 + source[i + 2] * 0.114;
+        samples += 1;
+      }
+      const threshold = Math.max(82, Math.min(198, total / Math.max(1, samples) - 10));
+      const black = new Uint8Array(width * height);
+
+      for (let p = 0; p < width * height; p += 1) {
+        const i = p * 4;
+        const y = source[i] * 0.299 + source[i + 1] * 0.587 + source[i + 2] * 0.114;
+        black[p] = y < threshold ? 1 : 0;
+      }
+
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          let keepBlack = black[y * width + x] === 1;
+          if (keepBlack) {
+            for (let dx = -radius; dx <= radius; dx += 1) {
+              const nx = x + dx;
+              if (nx < 0 || nx >= width || black[y * width + nx] === 0) {
+                keepBlack = false;
+                break;
+              }
+            }
+          }
+          const value = keepBlack ? 0 : 255;
+          const i = (y * width + x) * 4;
+          data[i] = value;
+          data[i + 1] = value;
+          data[i + 2] = value;
+          data[i + 3] = 255;
+        }
+      }
+    }
+
     return imageData;
   }
 
@@ -642,6 +688,13 @@ export function createBarcodeScanner({
                 { profile: 4, preprocess: "binary:8" },
                 { profile: 2, preprocess: "contrastStrong" },
                 { profile: 4, preprocess: "contrastStrong" },
+
+                // Ink-spread recovery: shrink vertical black bars only in the
+                // horizontal direction to reopen narrow white barcode gaps.
+                { profile: 2, preprocess: "thinBars1" },
+                { profile: 4, preprocess: "thinBars1" },
+                { profile: 2, preprocess: "thinBars2" },
+                { profile: 4, preprocess: "thinBars2" },
                 { profile: 1, preprocess: null },
                 { profile: 3, preprocess: "contrast" },
                 { profile: 0, preprocess: null },
