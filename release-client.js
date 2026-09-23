@@ -107,12 +107,10 @@
     }
   }, 12000);
 
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") checkForReleaseChange();
-  });
-
+  // Do not run release navigation checks on window focus/visibility changes.
+  // Mobile browsers can emit these during pull/scroll UI transitions, which
+  // must never reset the app. Release checks stay on online + periodic polling.
   window.addEventListener("online", checkForReleaseChange);
-  window.addEventListener("focus", checkForReleaseChange);
 
   setInterval(checkForReleaseChange, 120000);
 
