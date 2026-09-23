@@ -2,6 +2,63 @@
 // Optimized for small, short shelf-label barcodes such as EAN-8.
 let decoderPromise;
 let nativeDetectorPromise;
+let ocrWorkerPromise;
+
+async function loadOcrWorker() {
+  if (!ocrWorkerPromise) {
+    ocrWorkerPromise = (async () => {
+      if (!window.Tesseract) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          const timeout = setTimeout(() => {
+            script.remove();
+            reject(new Error("Ticket text reader loading timed out."));
+          }, 20000);
+
+          script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+          script.onload = () => {
+            clearTimeout(timeout);
+            resolve();
+          };
+          script.onerror = () => {
+            clearTimeout(timeout);
+            script.remove();
+            reject(new Error("Ticket text reader could not load."));
+          };
+          document.head.appendChild(script);
+        });
+      }
+
+      const worker = await window.Tesseract.createWorker("eng", 1, {
+        logger: () => {},
+        workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",
+        langPath: "https://tessdata.projectnaptha.com/4.0.0",
+        corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
+      });
+
+      await worker.setParameters({
+        tessedit_char_whitelist: "0123456789",
+        preserve_interword_spaces: "1",
+      });
+
+      return worker;
+    })().catch((error) => {
+      ocrWorkerPromise = null;
+      throw error;
+    });
+  }
+
+  return ocrWorkerPromise;
+}
+
+function extractTicketNumberCandidates(text) {
+  const matches = String(text || "").match(/\d(?:[\s._-]?\d){5,7}/g) || [];
+  return [...new Set(
+    matches
+      .map((value) => value.replace(/\D/g, ""))
+      .filter((value) => /^\d{6,8}$/.test(value))
+  )];
+}
 
 async function loadNativeDetector() {
   if (!("BarcodeDetector" in window)) return null;
@@ -92,6 +149,7 @@ export function createBarcodeScanner({
   scanButton,
   onResult,
   onError,
+  onTextCandidates = null,
 }) {
   let session = 0;
   let stream = null;
@@ -108,6 +166,10 @@ export function createBarcodeScanner({
 
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d", {
+    willReadFrequently: true,
+  });
+  const ocrCanvas = document.createElement("canvas");
+  const ocrContext = ocrCanvas.getContext("2d", {
     willReadFrequently: true,
   });
 
@@ -604,7 +666,72 @@ export function createBarcodeScanner({
       let failures = 0;
       let softCandidate = "";
       let softCandidateHits = 0;
+      let ocrRunning = false;
+      let lastOcrAt = 0;
       const started = Date.now();
+
+      async function tryTicketTextRecognition() {
+        if (!onTextCandidates || ocrRunning || id !== session || !active) return;
+
+        const now = Date.now();
+        if (now - started < 4200 || now - lastOcrAt < 6500) return;
+        lastOcrAt = now;
+        ocrRunning = true;
+
+        try {
+          const width = video.videoWidth;
+          const height = video.videoHeight;
+          if (!width || !height) return;
+
+          const maxWidth = 1800;
+          const scale = Math.min(1, maxWidth / width);
+          ocrCanvas.width = Math.max(1, Math.round(width * scale));
+          ocrCanvas.height = Math.max(1, Math.round(height * scale));
+
+          ocrContext.save();
+          ocrContext.filter = "grayscale(1) contrast(1.65)";
+          ocrContext.drawImage(video, 0, 0, ocrCanvas.width, ocrCanvas.height);
+          ocrContext.restore();
+
+          const previousStatus = status.textContent;
+          status.textContent = "Reading printed ticket number…";
+
+          const worker = await loadOcrWorker();
+          if (id !== session || !active) return;
+
+          const result = await worker.recognize(ocrCanvas);
+          if (id !== session || !active) return;
+
+          const candidates = extractTicketNumberCandidates(result?.data?.text || "");
+          if (!candidates.length) {
+            status.textContent = previousStatus;
+            return;
+          }
+
+          const accepted = await onTextCandidates(candidates);
+          if (id !== session || !active) return;
+
+          const acceptedText = String(accepted || "").trim();
+          if (!acceptedText) {
+            status.textContent = previousStatus;
+            return;
+          }
+
+          processing = true;
+          stop();
+          try {
+            await onResult(acceptedText);
+          } catch (error) {
+            onError(error);
+          } finally {
+            processing = false;
+          }
+        } catch (error) {
+          console.warn("Ticket text recognition:", error);
+        } finally {
+          ocrRunning = false;
+        }
+      }
 
       async function scanFrame() {
         if (id !== session || !active) return;
@@ -774,8 +901,10 @@ export function createBarcodeScanner({
 
             if (Date.now() - started > 5500) {
               status.textContent =
-                "Move closer. Keep only the barcode inside the guide with white space at both ends.";
+                "Move closer. Barcode scan is active; damaged tickets also use printed-number recognition.";
             }
+
+            void tryTicketTextRecognition();
 
             // If native detection is available, ZXing finishes loading in the
             // background and automatically becomes the fallback on hard labels.
