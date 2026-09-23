@@ -154,7 +154,7 @@ export function createBarcodeScanner({
 
   const isAndroid = /Android/i.test(navigator.userAgent);
 
-  function capture(source, profile, perspective = 0) {
+  function capture(source, profile, perspective = 0, verticalOffset = 0) {
     const width = source.videoWidth || source.width;
     const height = source.videoHeight || source.height;
 
@@ -273,7 +273,7 @@ export function createBarcodeScanner({
       context.drawImage(
         source,
         (width - sw) / 2,
-        (height - sh) / 2,
+        Math.max(0, Math.min(height - sh, (height - sh) / 2 + verticalOffset * visibleHeight)),
         sw,
         sh,
         0,
@@ -658,11 +658,20 @@ export function createBarcodeScanner({
                 { profile: 3, preprocess: "contrast" },
                 { profile: 0, preprocess: null },
               ];
+              const passIndex = frames++;
               const pass = isAndroid
-                ? androidPasses[frames++ % androidPasses.length]
-                : { profile: frames++ % 3, preprocess: null };
+                ? androidPasses[passIndex % androidPasses.length]
+                : { profile: passIndex % 3, preprocess: null };
 
-              let frame = capture(video, pass.profile, 0);
+              // Keep the centre scan as the primary path. On alternating passes,
+              // sweep the same crop upward/downward so labels slightly outside
+              // the guide can still be picked up without moving the camera.
+              const sweepOffsets = [0, 0, -0.22, 0, 0.22, 0, -0.38, 0, 0.38];
+              const verticalOffset = isAndroid
+                ? sweepOffsets[passIndex % sweepOffsets.length]
+                : 0;
+
+              let frame = capture(video, pass.profile, 0, verticalOffset);
               if (pass.preprocess) {
                 frame = preprocessBarcode(frame, pass.preprocess);
               }
