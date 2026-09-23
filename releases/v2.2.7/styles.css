@@ -7477,12 +7477,17 @@ body {
 
 
 /* Barcode guide doubles as the manual snapshot trigger on hard-to-read labels. */
+/* Snapshot guide must sit above the camera and consume the touch. */
 .scanner-wrap .barcode-guide[role="button"] {
   pointer-events: auto;
   cursor: pointer;
-  touch-action: manipulation;
+  touch-action: none;
+  z-index: 8;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .scanner-wrap .barcode-guide[role="button"]:active {
-  transform: scale(0.985);
+  transform: translateY(-50%) scale(0.985);
 }

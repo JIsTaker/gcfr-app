@@ -667,7 +667,16 @@ export function createBarcodeScanner({
         guide.setAttribute("role", "button");
         guide.setAttribute("tabindex", "0");
         guide.setAttribute("aria-label", "Tap to focus and scan snapshot");
-        guide.onclick = decodeSnapshot;
+        guide.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          decodeSnapshot();
+        };
+        guide.ontouchend = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          decodeSnapshot();
+        };
         guide.onkeydown = (event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
