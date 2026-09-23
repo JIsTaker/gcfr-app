@@ -103,6 +103,9 @@ export function createBarcodeScanner({
   let nativeDetector = null;
   let nativeFailures = 0;
   let decoder = null;
+  let lastCandidate = "";
+  let candidateHits = 0;
+  let candidateAt = 0;
   let decoderLoadError = null;
 
   const canvas = document.createElement("canvas");
@@ -381,10 +384,13 @@ export function createBarcodeScanner({
       nativeDetector = await nativeDetectorTask;
       decoder = null;
       decoderLoadError = null;
+      lastCandidate = "";
+      candidateHits = 0;
+      candidateAt = 0;
 
       const decoderTask = loadDecoder()
         .then((loaded) => {
-          decoder = loaded;
+          if (id === session && active) decoder = loaded;
           return loaded;
         })
         .catch((error) => {
@@ -518,18 +524,39 @@ export function createBarcodeScanner({
             failures = 0;
 
             if (foundText) {
-              processing = true;
-              stop();
+              const normalized = foundText.trim();
+              const now = Date.now();
 
-              try {
-                await onResult(foundText);
-              } catch (error) {
-                onError(error);
-              } finally {
-                processing = false;
+              // Require the same decode twice in a short window. A single
+              // blurry frame can otherwise produce a plausible but wrong
+              // Code128/ITF value and close the scanner immediately.
+              if (normalized === lastCandidate && now - candidateAt <= 1200) {
+                candidateHits += 1;
+              } else {
+                lastCandidate = normalized;
+                candidateHits = 1;
+              }
+              candidateAt = now;
+
+              if (candidateHits >= 2) {
+                processing = true;
+                stop();
+
+                try {
+                  await onResult(normalized);
+                } catch (error) {
+                  onError(error);
+                } finally {
+                  processing = false;
+                }
+
+                return;
               }
 
-              return;
+              status.textContent = "Barcode found. Hold steady…";
+            } else if (Date.now() - candidateAt > 1200) {
+              lastCandidate = "";
+              candidateHits = 0;
             }
 
             if (Date.now() - started > 5500) {
