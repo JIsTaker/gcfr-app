@@ -227,16 +227,31 @@ export function createBarcodeScanner({
             maxOutput: 2200,
           },
           {
-            widthRatio: 0.94,
+            widthRatio: 0.96,
             heightRatio: 0.58,
             maxScale: 2.4,
             maxOutput: 2500,
           },
           {
-            widthRatio: 0.84,
+            widthRatio: 0.90,
             heightRatio: 0.34,
             maxScale: 3.2,
             maxOutput: 2800,
+          },
+          // Wide, shallow carton/supplier label profile. Code39 factory
+          // labels often span almost the whole camera width and are much
+          // shorter than retail EAN labels.
+          {
+            widthRatio: 0.99,
+            heightRatio: 0.24,
+            maxScale: 3.4,
+            maxOutput: 3000,
+          },
+          {
+            widthRatio: 0.99,
+            heightRatio: 0.38,
+            maxScale: 2.8,
+            maxOutput: 2900,
           },
         ];
 
@@ -667,18 +682,32 @@ export function createBarcodeScanner({
                 { profile: 3, preprocess: "contrast" },
                 { profile: 0, preprocess: null },
               ];
+              const iosPasses = [
+                { profile: 3, preprocess: null },
+                { profile: 3, preprocess: "contrast" },
+                { profile: 4, preprocess: null },
+                { profile: 3, preprocess: "binary:-24" },
+                { profile: 3, preprocess: "binary:-12" },
+                { profile: 4, preprocess: "contrast" },
+                { profile: 2, preprocess: null },
+                { profile: 2, preprocess: "contrast" },
+                { profile: 1, preprocess: null },
+                { profile: 0, preprocess: null },
+                { profile: 3, preprocess: "contrastStrong" },
+                { profile: 4, preprocess: "binary:-12" },
+              ];
+
               const passIndex = frames++;
               const pass = isAndroid
                 ? androidPasses[passIndex % androidPasses.length]
-                : { profile: passIndex % 3, preprocess: null };
+                : iosPasses[passIndex % iosPasses.length];
 
               // Keep the centre scan as the primary path. On alternating passes,
               // sweep the same crop upward/downward so labels slightly outside
               // the guide can still be picked up without moving the camera.
               const sweepOffsets = [0, 0, -0.22, 0, 0.22, 0, -0.38, 0, 0.38];
-              const verticalOffset = isAndroid
-                ? sweepOffsets[passIndex % sweepOffsets.length]
-                : 0;
+              const verticalOffset =
+                sweepOffsets[passIndex % sweepOffsets.length];
 
               let frame = capture(video, pass.profile, 0, verticalOffset);
               if (pass.preprocess) {
