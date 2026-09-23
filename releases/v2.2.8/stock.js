@@ -481,11 +481,8 @@ export function initGcfrV2Stock({
 
       state.setupData = [...byCode.values()]
         .filter((row) =>
-          row.stock_type
-          || row.packages.length
-          || row.barcodes.some((item) =>
-            ["ticket_barcode", "factory_barcode"].includes(item.barcode_type)
-          )
+          row.packages.length
+          || row.barcodes.some((item) => item.barcode_type === "factory_barcode")
         )
         .sort((a, b) => a.name.localeCompare(b.name));
 
