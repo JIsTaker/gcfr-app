@@ -430,6 +430,12 @@ export function createBarcodeScanner({
     // Open the camera request first, directly from the user's tap. Do not move
     // the existing scanner DOM or shift focus before getUserMedia(): mobile
     // browsers can treat that as leaving the user-activation path.
+    // Scanner overlays are nested inside screen/card containers. Move the
+    // active overlay to <body> so iOS renders the fixed camera layer in the
+    // viewport instead of inside an ancestor stacking/containing context.
+    if (overlay.parentElement !== document.body) {
+      document.body.appendChild(overlay);
+    }
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.setAttribute("aria-label", "Scan barcode");
