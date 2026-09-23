@@ -7491,3 +7491,13 @@ body {
 .scanner-wrap .barcode-guide[role="button"]:active {
   transform: translateY(-50%) scale(0.985);
 }
+
+.scanner-wrap button.barcode-guide {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}

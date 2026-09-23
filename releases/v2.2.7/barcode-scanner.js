@@ -664,15 +664,8 @@ export function createBarcodeScanner({
 
       const guide = overlay.querySelector(".barcode-guide");
       if (guide) {
-        guide.setAttribute("role", "button");
-        guide.setAttribute("tabindex", "0");
         guide.setAttribute("aria-label", "Tap to focus and scan snapshot");
         guide.onclick = (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          decodeSnapshot();
-        };
-        guide.ontouchend = (event) => {
           event.preventDefault();
           event.stopPropagation();
           decodeSnapshot();
