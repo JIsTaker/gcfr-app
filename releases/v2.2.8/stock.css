@@ -1152,3 +1152,18 @@ body {
     grid-template-columns: 52px minmax(0, 1fr) 12px minmax(0, 1fr) 42px;
   }
 }
+
+/* V2.2.8 hotfix — keep stock mode selector above decorative hero layers and fully tappable */
+.stock-hero .stock-mode-switch{
+  position:relative;
+  z-index:4;
+  pointer-events:auto;
+}
+.stock-hero .stock-mode-btn{
+  position:relative;
+  z-index:5;
+  pointer-events:auto;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(0,0,0,.08);
+}
+.stock-hero::after{pointer-events:none}
