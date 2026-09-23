@@ -704,11 +704,22 @@ export function initGcfrV2Stock({
   }
 
   function setScanMode(mode) {
-    state.scanMode = mode === "shopfloor" ? "shopfloor" : "backstock";
-    q("stockBackstockModeBtn")?.classList.toggle("active", state.scanMode === "backstock");
-    q("stockShopfloorModeBtn")?.classList.toggle("active", state.scanMode === "shopfloor");
+    const nextMode = mode === "shopfloor" ? "shopfloor" : "backstock";
+    if (state.scanMode === nextMode) return;
+
+    stopScanner();
+    q("stockScannerWrap")?.classList.add("hidden");
+    state.scanMode = nextMode;
+
+    const backstock = state.scanMode === "backstock";
+    q("stockBackstockModeBtn")?.classList.toggle("active", backstock);
+    q("stockBackstockModeBtn")?.setAttribute("aria-selected", String(backstock));
+    q("stockShopfloorModeBtn")?.classList.toggle("active", !backstock);
+    q("stockShopfloorModeBtn")?.setAttribute("aria-selected", String(!backstock));
+
     if (q("stockScanBtn")) q("stockScanBtn").textContent =
-      state.scanMode === "backstock" ? "▣ Scan crate / carton" : "▣ Scan selling / product ticket";
+      backstock ? "▣ Scan crate / carton" : "▣ Scan selling / product ticket";
+
     closeUnknownBarcode();
   }
 
@@ -1487,6 +1498,7 @@ export function initGcfrV2Stock({
 
   q("stockUseProductWeight")?.addEventListener("change", syncWeightMode);
   q("stockUseManualWeight")?.addEventListener("change", syncWeightMode);
+  state.scanMode = "";
   setScanMode("backstock");
   renderManualWeights();
 
