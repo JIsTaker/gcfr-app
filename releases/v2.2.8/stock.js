@@ -27,7 +27,7 @@ export function initGcfrV2Stock({
     scanMode: "backstock",
     weightMode: "product",
     backstockEntryMode: "used",
-    activeShopfloorLayers: new Set([1]),
+    activeShopfloorLayers: new Set(),
   };
 
   const q = (id) => $(id);
@@ -1784,7 +1784,7 @@ export function initGcfrV2Stock({
 
     state.manualWeights = [];
     state.backstockEntryMode = "used";
-    state.activeShopfloorLayers = new Set([1]);
+    state.activeShopfloorLayers = new Set();
     renderShopfloorLayers();
     renderManualWeights();
 
