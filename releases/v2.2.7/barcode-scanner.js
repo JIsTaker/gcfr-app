@@ -323,6 +323,67 @@ export function createBarcodeScanner({
     );
   }
 
+  function preprocessBarcode(imageData, mode) {
+    const data = imageData.data;
+
+    if (mode === "contrast") {
+      // Stretch local barcode contrast and lightly sharpen dark/light edges.
+      // Thermal labels often have grey paper, faded gaps and ink spread.
+      let min = 255;
+      let max = 0;
+
+      for (let i = 0; i < data.length; i += 16) {
+        const y = Math.round(
+          data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114,
+        );
+        min = Math.min(min, y);
+        max = Math.max(max, y);
+      }
+
+      const span = Math.max(32, max - min);
+
+      for (let i = 0; i < data.length; i += 4) {
+        const y = Math.round(
+          data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114,
+        );
+        const stretched = Math.max(
+          0,
+          Math.min(255, Math.round(((y - min) * 255) / span)),
+        );
+        data[i] = stretched;
+        data[i + 1] = stretched;
+        data[i + 2] = stretched;
+      }
+
+      return imageData;
+    }
+
+    if (mode === "binary") {
+      // Adaptive-by-frame threshold for faded/dirty thermal printing.
+      let total = 0;
+      let samples = 0;
+
+      for (let i = 0; i < data.length; i += 16) {
+        total +=
+          data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        samples += 1;
+      }
+
+      const threshold = Math.max(90, Math.min(190, total / Math.max(1, samples) - 12));
+
+      for (let i = 0; i < data.length; i += 4) {
+        const y =
+          data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        const value = y < threshold ? 0 : 255;
+        data[i] = value;
+        data[i + 1] = value;
+        data[i + 2] = value;
+      }
+    }
+
+    return imageData;
+  }
+
   async function start() {
     if (opening || active || processing) return;
 
@@ -534,22 +595,27 @@ export function createBarcodeScanner({
               // Rotate full / wide / tight crops.
               // Android uses smaller buffers so the scan loop stays responsive.
               const androidPasses = [
-                { profile: 2, perspective: 0 },
-                { profile: 4, perspective: 0 },
-                { profile: 2, perspective: 0.18 },
-                { profile: 2, perspective: -0.18 },
-                { profile: 4, perspective: 0.18 },
-                { profile: 4, perspective: -0.18 },
-                { profile: 1, perspective: 0 },
-                { profile: 3, perspective: 0 },
-                { profile: 0, perspective: 0 },
+                { profile: 2, preprocess: null },
+                { profile: 4, preprocess: null },
+                { profile: 2, preprocess: "contrast" },
+                { profile: 4, preprocess: "contrast" },
+                { profile: 2, preprocess: "binary" },
+                { profile: 4, preprocess: "binary" },
+                { profile: 1, preprocess: null },
+                { profile: 3, preprocess: "contrast" },
+                { profile: 0, preprocess: null },
               ];
               const pass = isAndroid
                 ? androidPasses[frames++ % androidPasses.length]
-                : { profile: frames++ % 3, perspective: 0 };
+                : { profile: frames++ % 3, preprocess: null };
+
+              let frame = capture(preview, pass.profile, 0);
+              if (pass.preprocess) {
+                frame = preprocessBarcode(frame, pass.preprocess);
+              }
 
               const results = await decoder.readBarcodes(
-                capture(preview, pass.profile, pass.perspective),
+                frame,
                 options,
               );
 
