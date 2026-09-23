@@ -186,6 +186,7 @@
           </div>
 
           <div id="barcodeAdminLinkTools" class="barcode-admin-link-tools hidden">
+            <button id="barcodeLinkScanBtn" type="button" class="primary full">Scan product to link</button>
             <input
               id="barcodeLinkSearch"
               type="search"
@@ -354,6 +355,7 @@
             </div>
 
             <div id="stockUnknownRegisterPanel" class="stock-register-panel hidden">
+              <button id="stockLinkScanBtn" class="primary full" type="button">Scan product to link</button>
               <div class="stock-register-copy">
                 <strong>Link to an existing product</strong>
                 <span>Use the product search above. Selecting a product will link this barcode automatically.</span>
@@ -1089,6 +1091,7 @@
               <button id="adminStockUnknownFactoryBtn" class="secondary" type="button">Factory Code</button>
             </div>
 
+            <button id="adminStockLinkScanBtn" class="primary full" type="button">Scan product to link</button>
             <div id="adminStockManualRegisterPanel" class="stock-register-panel hidden">
               <div class="stock-register-copy">
                 <strong>Link to an existing product</strong>
@@ -1096,7 +1099,6 @@
               </div>
 
               <div class="product-search-block">
-                <button id="adminStockLinkScanBtn" class="primary full" type="button">Step 2 · Scan product ticket / selling barcode</button>
                 <label class="search-label" for="adminStockLinkSearch">Find existing product</label>
                 <input
                   id="adminStockLinkSearch"

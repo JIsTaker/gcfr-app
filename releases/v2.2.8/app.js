@@ -57,6 +57,7 @@ let draft = [];
 let scanner = null;
 let adminBarcodeScanner = null;
 let pendingUnknownBarcode = "";
+let scanningLinkProduct = false;
 let barcodeLinkSearchTimer = null;
 let installPrompt = null;
 let realtimeChannels = [];
@@ -3608,6 +3609,11 @@ $("submitRunBtn").onclick = async () => {
 $("scanBtn").onclick = startScanner;
 $("stopScannerBtn").onclick = resetScannerUiState;
 $("barcodeLinkCloseBtn").onclick = closeBarcodeLinkPanel;
+$("barcodeLinkScanBtn").onclick = () => {
+  if (!pendingUnknownBarcode || currentUser?.id !== ADMIN_USER_ID) return;
+  scanningLinkProduct = true;
+  return getBarcodeScanner().start();
+};
 
 $("barcodeManualRegisterLaunchBtn").onclick = () => {
   if (!pendingUnknownBarcode || !canManageProductData()) return;
@@ -3659,6 +3665,18 @@ function getBarcodeScanner() {
     closeButton: $("stopScannerBtn"), scanButton: $("scanBtn"),
     onResult: async (raw) => {
       const value = normalizeScannedBarcode(raw);
+      if (scanningLinkProduct) {
+        scanningLinkProduct = false;
+        const source = pendingUnknownBarcode;
+        const product = value ? await resolveScannedBarcode(value) : null;
+        if (!source || pendingUnknownBarcode !== source) return;
+        if (product) await linkPendingBarcodeToProduct(product, $("barcodeLinkScanBtn"));
+        else {
+          showToast("Product not found. Scan another product ticket or search manually.");
+          $("barcodeLinkSearch").focus();
+        }
+        return;
+      }
       if (value) await handleScannedBarcode(value);
     },
     onError: (error) => {
@@ -3753,6 +3771,8 @@ function showUnknownBarcode(barcode) {
 }
 
 function closeBarcodeLinkPanel() {
+  scanningLinkProduct = false;
+  if ($("barcodeLinkScanBtn")) $("barcodeLinkScanBtn").disabled = false;
   pendingUnknownBarcode = "";
 
   if ($("barcodeLinkPanel")) {

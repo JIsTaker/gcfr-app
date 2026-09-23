@@ -16,6 +16,7 @@ export function initGcfrV2Stock({
     scanner: null,
     adminScanner: null,
     adminScanPurpose: "register",
+    stockScanPurpose: "count",
     catalog: null,
     catalogPromise: null,
     selectedProduct: null,
@@ -1345,7 +1346,10 @@ export function initGcfrV2Stock({
           try {
             state.scanner?.stop();
           } catch {}
-          await handleBarcode(barcode);
+          if (state.stockScanPurpose === "link") {
+            state.stockScanPurpose = "count";
+            await linkScannedProduct(barcode, "stock");
+          } else await handleBarcode(barcode);
         },
         onTextCandidates: (candidates, meta) =>
           resolveTicketTextCandidate(candidates, false, meta),
@@ -1360,6 +1364,7 @@ export function initGcfrV2Stock({
   }
 
   function startScanner() {
+    state.stockScanPurpose = "count";
     closeUnknownBarcode();
     return getScanner().start();
   }
@@ -1609,7 +1614,7 @@ export function initGcfrV2Stock({
         q("stockUnknownRegisterPanel")?.classList.remove("hidden");
         q("stockUnknownMessage").textContent =
           "Search the product above to link this barcode, or register a new product below.";
-        q("stockProductSearch")?.focus();
+        focusStep("stockLinkScanBtn");
       } else {
         q("adminStockManualRegisterPanel")?.classList.remove("hidden");
         q("adminStockScanUnknownMessage").textContent =
@@ -1752,18 +1757,9 @@ export function initGcfrV2Stock({
     } catch {}
   }
 
-  async function handleAdminBarcode(rawBarcode) {
-    const barcode = normalizeScannedBarcode(rawBarcode);
-    if (!barcode) return;
-
-    if (state.adminScanPurpose === "search") {
-      q("stockSetupDataSearch").value = barcode;
-      await refreshSetupData();
-      focusStep("stockSetupDataSearch");
-      return;
-    }
-    if (state.adminScanPurpose === "link") {
+  async function linkScannedProduct(barcode, source = "admin") {
       if (!state.pendingBarcode || !state.pendingBarcodeMode) return;
+      const pending = state.pendingBarcode;
       try {
         const stored = await findStoredBarcode(barcode);
         if (stored?.barcode_type === "factory_barcode"
@@ -1775,7 +1771,7 @@ export function initGcfrV2Stock({
         const product = stored?.product || inferred || await findProductByCode(barcode);
         if (!product) {
           showToast("Product not found. Search manually below; the first barcode is still saved.");
-          focusStep("adminStockLinkSearch");
+          focusStep(source === "stock" ? "stockProductSearch" : "adminStockLinkSearch");
           return;
         }
         if (inferred) {
@@ -1784,10 +1780,22 @@ export function initGcfrV2Stock({
           });
           if (error) throw error;
         }
-        await selectForAdmin(product);
+        if (state.pendingBarcode !== pending) return;
+        if (source === "stock") await selectProduct(product);
+        else await selectForAdmin(product);
       } catch (error) { showToast(error.message || "Could not link barcode."); }
+  }
+
+  async function handleAdminBarcode(rawBarcode) {
+    const barcode = normalizeScannedBarcode(rawBarcode);
+    if (!barcode) return;
+    if (state.adminScanPurpose === "search") {
+      q("stockSetupDataSearch").value = barcode;
+      await refreshSetupData();
+      focusStep("stockSetupDataSearch");
       return;
     }
+    if (state.adminScanPurpose === "link") return linkScannedProduct(barcode);
 
     state.pendingBarcode = "";
     state.pendingBarcodeMode = "";
@@ -1999,7 +2007,16 @@ export function initGcfrV2Stock({
   q("stockUnknownCloseBtn").onclick = closeUnknownBarcode;
 
   q("adminStockScanBtn")?.addEventListener("click", startAdminStockScanner);
-  q("adminStockLinkScanBtn")?.addEventListener("click", () => startAdminStockScanner("link"));
+  q("adminStockLinkScanBtn")?.addEventListener("click", async () => {
+    if (!state.pendingBarcode) return;
+    if (!state.pendingBarcodeMode) await chooseUnknownType(q("adminStockRegistrationMode").value, "admin");
+    return startAdminStockScanner("link");
+  });
+  q("stockLinkScanBtn")?.addEventListener("click", () => {
+    if (!state.pendingBarcode || !state.pendingBarcodeMode || !canManage()) return;
+    state.stockScanPurpose = "link";
+    return getScanner().start();
+  });
   q("stockSetupDataScanBtn")?.addEventListener("click", () => startAdminStockScanner("search"));
   q("adminStockRegistrationMode")?.addEventListener("change", () => {
     closeUnknownBarcode();
