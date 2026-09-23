@@ -48,7 +48,9 @@ async function cacheRelease(version) {
   await cache.addAll([
     atScope(`${base}index.html`),
     atScope(`${base}app.js`),
-    atScope(`${base}styles.css`)
+    atScope(`${base}styles.css`),
+    atScope(`${base}barcode-scanner.js`),
+    atScope(`${base}stock.js`)
   ]);
 }
 
