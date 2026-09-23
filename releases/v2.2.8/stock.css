@@ -1152,6 +1152,41 @@ body {
     grid-template-columns: 52px minmax(0, 1fr) 12px minmax(0, 1fr) 42px;
   }
 }
+/* Separate count entry from product/package setup. */
+#stockCalculator { display: none !important; }
+.count-area-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.count-area-tabs button { padding: 14px 10px; border: 1px solid #cdd8d1; border-radius: 12px; background: #fff; color: #345346; font-weight: 750; }
+.count-area-tabs button.active { background: #173f2b; color: #fff; border-color: #173f2b; }
+#stockCounts { display: grid; gap: 12px; min-width: 0; }
+.count-editor h3 { margin: 3px 0 12px; overflow-wrap: anywhere; }
+.count-editor input, .count-editor select { width: 100%; min-width: 0; box-sizing: border-box; }
+.count-editor label { display: grid; gap: 7px; }
+.count-layer { display: grid; grid-template-columns: 48px minmax(0,1fr) 12px minmax(0,1fr) 34px; gap: 6px; align-items: center; margin-bottom: 10px; }
+.count-layer strong { font-size: 12px; }
+.count-layer label { font-size: 11px; display: grid; justify-items: center; }
+.count-layer input[type="checkbox"] { width: 18px; height: 18px; }
+.count-samples { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.count-samples label { font-size: 12px; }
+.count-ticket { background: #fff; border: 1px solid #d7e2da; padding: 14px 6px; margin-top: 10px; text-align: center; }
+.count-ticket svg { display: block; width: 100%; min-height: 88px; }
+.count-soh { margin: 10px 0; font-size: 13px; }
+.count-soh strong { float: right; }
+.count-history-panel > summary, .count-history-date > summary { cursor: pointer; font-weight: 750; padding: 12px 0; }
+.count-history-date { border-bottom: 1px solid #d7e2da; }
+.count-layer input { padding: 10px 5px; text-align: center; }
+.count-layer output { font-size: 12px; text-align: right; }
+.count-preview { background: #edf4ef; border-radius: 12px; padding: 15px; color: #173f2b; font-size: 20px; font-weight: 800; }
+.count-results .stock-section-head { flex-wrap: wrap; gap: 10px; }
+#countDate { max-width: 165px; padding: 9px; }
+.count-group { border-top: 1px solid #dfe6e1; padding: 12px 0; }
+.count-group summary { display: flex; gap: 12px; justify-content: space-between; align-items: center; cursor: pointer; }
+.count-group summary span { min-width: 0; overflow-wrap: anywhere; }
+.count-group summary b { white-space: nowrap; color: #173f2b; }
+.count-group small, .count-record small { display: block; color: #738078; margin-top: 4px; font-size: 12px; overflow-wrap: anywhere; }
+.count-subtotals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; padding: 10px; border-radius: 10px; background: #f3f6f4; font-size: 12px; }
+.count-subtotals b { display: block; margin-top: 5px; font-size: 16px; }
+.count-record { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid #eef1ef; padding: 10px 0; }
+.count-record > div { min-width: 0; }
 
 /* V2.2.8 hotfix — keep stock mode selector above decorative hero layers and fully tappable */
 .stock-hero .stock-mode-switch{

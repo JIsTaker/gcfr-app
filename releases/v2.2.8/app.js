@@ -770,6 +770,8 @@ stockController = initGcfrV2Stock({
   canManageProductData,
   normalizeScannedBarcode,
   openAdminStockSetup: openStockSetupFromOperations,
+  renderBarcode: createCode128BarcodeSvg,
+  openStock: () => navigateToScreen('stock'),
 });
 
 const titles = {
@@ -6994,7 +6996,7 @@ function activateAdminStockSetupScreen() {
   document.body.classList.remove("chat-screen-lock");
 }
 
-async function openStockSetupFromOperations({ barcode = "", mode = "factory" } = {}) {
+async function openStockSetupFromOperations({ barcode = "", mode = "factory", product = null } = {}) {
   if (!canManageProductData()) {
     showToast("Stock setup access is limited to Joey, Troy J and Alex S.");
     return;
@@ -7003,6 +7005,8 @@ async function openStockSetupFromOperations({ barcode = "", mode = "factory" } =
   limitedStockSetupEntry = !isOwnerUser();
   activateAdminStockSetupScreen();
   showAdminStockSetupView();
+
+  if (product) await stockController?.selectForAdmin(product);
 
   if (barcode) {
     await stockController?.handleAdminBarcode(barcode);
@@ -7777,4 +7781,3 @@ boot()
   .catch((error) => {
     console.error("GCFR boot failed:", error);
   });
-

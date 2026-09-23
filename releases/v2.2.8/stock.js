@@ -1,4 +1,5 @@
 import { createBarcodeScanner } from "./barcode-scanner.js";
+import { initStockCounts } from "./stock-counts.js";
 
 export function initGcfrV2Stock({
   supabase,
@@ -8,6 +9,8 @@ export function initGcfrV2Stock({
   canManageProductData,
   normalizeScannedBarcode,
   openAdminStockSetup,
+  renderBarcode,
+  openStock,
 }) {
   const state = {
     scanner: null,
@@ -23,6 +26,7 @@ export function initGcfrV2Stock({
     pendingBarcodeMode: "",
     manualWeights: [],
     searchTimer: null,
+    scanRequest: 0,
     setupData: [],
     scanMode: "backstock",
     weightMode: "product",
@@ -55,6 +59,11 @@ export function initGcfrV2Stock({
   function canManage() {
     return !!canManageProductData?.();
   }
+
+  const counts = initStockCounts({supabase,getUser:currentUser,toast:showToast,renderBarcode,openStock,onAreaChange(area){
+    ++state.scanRequest;state.scanMode=area;state.selectedProduct=null;
+    stopScanner();closeUnknownBarcode();q('stockSelectedProduct').classList.add('hidden');
+  }});
 
   async function loadCatalog() {
     if (state.catalog) return state.catalog;
@@ -247,7 +256,8 @@ export function initGcfrV2Stock({
     if (renderOperational) renderSelectedProduct();
   }
 
-  async function selectProduct(product) {
+  async function selectProduct(product, options = {}) {
+    const barcode = options.barcode || state.pendingBarcode || "";
     const sameProduct = state.selectedProduct?.code === String(product.code || "").trim();
     state.selectedProduct = {
       code: String(product.code || "").trim(),
@@ -270,6 +280,7 @@ export function initGcfrV2Stock({
     try {
       await loadProfileAndPackages(false);
       if (state.selectedProduct !== selection) return;
+      if (options.factory) state.selectedPackageId = options.factory.id;
 
       const hasSavedProfile = !!state.profile;
       if (!state.profile) {
@@ -286,7 +297,7 @@ export function initGcfrV2Stock({
       renderSelectedProduct();
 
       if (["selling", "ticket"].includes(state.pendingBarcodeMode) && state.pendingBarcode) {
-        await savePendingProductBarcode();
+        if (!(await savePendingProductBarcode())) return;
       } else if (state.pendingBarcodeMode === "factory" && state.pendingBarcode) {
         if (!hasSavedProfile) {
           openProfileSetup();
@@ -295,6 +306,7 @@ export function initGcfrV2Stock({
           openPackageEditor({ factory_barcode: state.pendingBarcode });
         }
       }
+      await counts.select({product:state.selectedProduct,profile:state.profile,pack:options.factory || selectedPackage(),barcode},{auto:!!options.auto});
     } catch (error) {
       renderDatabaseUnavailable(error);
     }
@@ -323,6 +335,10 @@ export function initGcfrV2Stock({
       if (status) {
         status.innerHTML =
           '<div class="stock-warning"><strong>Stock setup required.</strong><span>Configure this product in Admin → Stock Setup.</span></div>';
+        if (canManage()) {
+          const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent='Set product type';
+          button.onclick=()=>openAdminStockSetup?.({product:state.selectedProduct});status.appendChild(button);
+        }
       }
 
       q("stockCalculator").classList.add("hidden");
@@ -1426,6 +1442,8 @@ export function initGcfrV2Stock({
   }
 
   async function handleBarcode(rawBarcode) {
+    if (counts.isBusy()) return;
+    const request=++state.scanRequest;
     const barcode = normalizeScannedBarcode(rawBarcode);
     if (!barcode) return;
 
@@ -1433,6 +1451,7 @@ export function initGcfrV2Stock({
 
     try {
       const factory = await findFactoryBarcode(barcode);
+      if(request!==state.scanRequest)return;
 
       if (state.scanMode === "shopfloor" && factory) {
         showToast("Factory crate/carton barcode belongs to Backstock Scanning.");
@@ -1440,36 +1459,43 @@ export function initGcfrV2Stock({
       }
 
       if (factory) {
+        if (counts.area() === 'shopfloor') {showToast('Use the selling barcode or product ticket for shopfloor.');return;}
         const product = await findProductByCode(factory.product_code);
+        if(request!==state.scanRequest)return;
         if (product) {
-          await selectProduct(product);
+          await selectProduct(product,{factory,barcode});
           state.selectedPackageId = factory.id;
           q("stockPackageSelect").value = factory.id;
           renderCalculator();
-          showToast(`Factory package loaded: ${product.name}`);
+          if (factory.approx_weight_mode === 'manual') showToast('Enter this package weight, then confirm.');
           return;
         }
       }
 
       const stored = await findStoredBarcode(barcode);
+      if(request!==state.scanRequest)return;
       if (state.scanMode === "backstock" && stored && stored.barcode_type !== "factory_barcode") {
         showToast("Selling/Product Ticket barcode belongs to Shopfloor Scanning.");
         return;
       }
       if (stored) {
-        await selectProduct(stored.product);
+        if (counts.area() === 'backstock') {
+          if (stored.barcode_type === 'factory_barcode' && canManage()) await openAdminStockSetup?.({barcode,mode:'factory'});
+          else showToast('Scan a crate / carton factory barcode for backstock.');
+          return;
+        }
+        if(stored.barcode_type==='factory_barcode'){showToast('Use the selling barcode or product ticket for shopfloor.');return;}
+        await selectProduct(stored.product,{barcode});
         showToast(`${stored.product.name} loaded.`);
         return;
       }
 
-      if (state.scanMode === "backstock") {
-        openUnknownBarcode(barcode);
-        return;
-      }
+      if(counts.area()==='backstock') {openUnknownBarcode(barcode);return;}
 
       const inferredTicket = await detectTicketProduct(barcode);
+      if(request!==state.scanRequest)return;
       if (inferredTicket) {
-        await selectProduct(inferredTicket);
+        await selectProduct(inferredTicket,{barcode});
 
         if (canManage()) {
           const { error } = await supabase.rpc("gcfr_link_stock_barcode", {
@@ -1488,8 +1514,9 @@ export function initGcfrV2Stock({
       }
 
       const exactProduct = await findProductByCode(barcode);
+      if(request!==state.scanRequest)return;
       if (exactProduct) {
-        await selectProduct(exactProduct);
+        await selectProduct(exactProduct,{barcode});
         showToast(`Product Code detected: ${exactProduct.name}`);
         return;
       }
@@ -1513,6 +1540,9 @@ export function initGcfrV2Stock({
     q("stockUnknownRegisterPanel")?.classList.add("hidden");
     q("stockUnknownManualForm")?.classList.add("hidden");
     q("stockUnknownManagerActions")?.classList.toggle("hidden", !canManage());
+    q('stockUnknownFactoryBtn').classList.toggle('hidden',counts.area()==='shopfloor');
+    q('stockUnknownSellingBtn').classList.toggle('hidden',counts.area()==='backstock');
+    q('stockUnknownTicketBtn').classList.toggle('hidden',counts.area()==='backstock');
 
     q("stockUnknownSellingBtn")?.classList.toggle("hidden", state.scanMode !== "shopfloor");
     q("stockUnknownTicketBtn")?.classList.toggle("hidden", state.scanMode !== "shopfloor");
@@ -1601,57 +1631,21 @@ export function initGcfrV2Stock({
     const previousText = button.textContent;
     button.textContent = "Registering...";
 
-    let product = { code: productCode, name: productName };
-
-    if (state.pendingBarcodeMode === "factory") {
-      const { data, error } = await supabase.rpc("register_product_for_run", {
-        _product_code: productCode,
-        _product_name: productName,
-      });
-
-      if (error) {
-        button.disabled = false;
-        button.textContent = previousText;
-        showToast(error.message);
-        return;
-      }
-
-      const returned = Array.isArray(data) && data.length ? data[0] : null;
-      product = {
-        code: returned?.code || productCode,
-        name: returned?.name || productName,
-      };
-    } else {
-      const { data, error } = await supabase.rpc("register_scanned_barcode_product", {
-        _barcode: state.pendingBarcode,
-        _product_code: productCode,
-        _product_name: productName,
-      });
-
-      if (error) {
-        button.disabled = false;
-        button.textContent = previousText;
-        showToast(error.message);
-        return;
-      }
-
-      const returned = Array.isArray(data) && data.length ? data[0] : null;
-      product = {
-        code: returned?.code || productCode,
-        name: returned?.name || productName,
-      };
-
-      // Enforce the V2 barcode type selected by the user.
-      const { error: linkError } = await supabase.rpc("gcfr_link_stock_barcode", {
-        _barcode: state.pendingBarcode,
-        _product_code: product.code,
-        _barcode_type: "product_code",
-      });
-
-      if (linkError) {
-        console.warn("Could not normalize barcode type:", linkError);
-      }
+    const mode = state.pendingBarcodeMode;
+    const { data, error } = await supabase.rpc("gcfr_register_stock_product", {
+      _barcode: state.pendingBarcode,
+      _product_code: productCode,
+      _product_name: productName,
+      _barcode_type: mode === "factory" ? "factory_barcode" : mode === "ticket" ? "ticket_barcode" : "product_code",
+    });
+    if (error) {
+      button.disabled = false;
+      button.textContent = previousText;
+      showToast(error.message);
+      return;
     }
+    const returned = Array.isArray(data) ? data[0] : data;
+    const product = {code:returned?.code || productCode,name:returned?.name || productName};
 
     button.disabled = false;
     button.textContent = previousText;
@@ -1670,7 +1664,7 @@ export function initGcfrV2Stock({
       || !state.pendingBarcode
       || !state.selectedProduct
       || !canManage()
-    ) return;
+    ) return false;
 
     const barcode = state.pendingBarcode;
     const isTicket = state.pendingBarcodeMode === "ticket";
@@ -1683,7 +1677,7 @@ export function initGcfrV2Stock({
 
     if (error) {
       showToast(error.message);
-      return;
+      return false;
     }
 
     const name = state.selectedProduct.name;
@@ -1692,6 +1686,7 @@ export function initGcfrV2Stock({
     void refreshSetupData();
     closeUnknownBarcode();
     showToast(`${isTicket ? "Store Ticket" : "Selling Barcode"} linked to ${name}.`);
+    return true;
   }
 
   function getAdminStockScanner() {
@@ -1834,6 +1829,8 @@ export function initGcfrV2Stock({
   }
 
   function reset() {
+    ++state.scanRequest;
+    counts.reset();
     stopScanner();
     stopAdminStockScanner();
     clearTimeout(state.searchTimer);
@@ -1871,11 +1868,14 @@ export function initGcfrV2Stock({
   }
 
   function onScreenChange(screen) {
+    if (screen === 'history') void counts.loadHistory();
     if (screen !== "stock") {
       stopScanner();
       if (screen !== "admin") stopAdminStockScanner();
       return;
     }
+
+    void counts.load();
 
     loadCatalog().catch((error) => {
       console.error("Stock catalog:", error);

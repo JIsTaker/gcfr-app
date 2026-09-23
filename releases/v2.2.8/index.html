@@ -300,7 +300,7 @@
           <div class="stock-hero-head">
             <div>
               <h2>Stock Calculator</h2>
-              <p class="muted">Scan or search a product, then count package and display stock.</p>
+              <p class="muted">Count backstock and shopfloor separately.</p>
             </div>
           </div>
 
@@ -311,7 +311,12 @@
             <button id="stockStopScannerBtn" class="secondary full" type="button">Close camera</button>
           </div>
 
-          <div class="stock-mode-switch" role="radiogroup" aria-label="Stock scan mode">
+          <div class="count-area-tabs" aria-label="Stock area">
+            <button type="button" data-stock-area="backstock" class="active" aria-pressed="true">Backstock scanning</button>
+            <button type="button" data-stock-area="shopfloor" aria-pressed="false">Shopfloor scanning</button>
+          </div>
+          <p id="stockAreaHint" class="muted">Factory barcode · crates and cartons</p>
+          <div class="stock-mode-switch hidden" role="radiogroup" aria-label="Stock scan mode">
             <label class="stock-mode-btn active" for="stockBackstockModeInput">
               <input id="stockBackstockModeInput" name="stockScanMode" type="radio" value="backstock" checked>
               <span>Backstock Scanning</span>
@@ -384,7 +389,8 @@
           <div id="stockOperationalStatus" class="hidden"></div>
         </div>
 
-        <div id="stockCalculator" class="card stock-calculator-card hidden">
+        <div id="stockCounts"></div>
+        <div id="stockCalculator" class="card stock-calculator-card hidden" aria-hidden="true" inert>
           <div class="stock-section-head">
             <div>
               <h3>Calculator</h3>
@@ -572,6 +578,10 @@
     </section>
 
     <section id="screen-history" class="screen">
+      <details class="card count-history-panel">
+        <summary>Stock Calculator History</summary>
+        <div id="stockCountHistory"></div>
+      </details>
       <div class="card">
         <div class="section-head">
           <div>
@@ -1518,4 +1528,3 @@
   <script type="module" src="./app.js"></script>
 </body>
 </html>
-

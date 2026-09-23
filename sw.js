@@ -1,4 +1,4 @@
-const CORE_CACHE = "gcfr-core-v4";
+const CORE_CACHE = "gcfr-core-v5";
 const RELEASE_CACHE_PREFIX = "gcfr-release-";
 
 const scopeUrl = new URL(self.registration.scope);
@@ -52,6 +52,7 @@ async function cacheRelease(version) {
     atScope(`${base}styles.css`),
     atScope(`${base}barcode-scanner.js`),
     atScope(`${base}stock.js`),
+    atScope(`${base}stock-counts.js`),
     atScope(`${base}stock.css`),
     atScope(`${base}vendor/zxing-reader.js`),
     atScope(`${base}vendor/zxing_reader.wasm`)
