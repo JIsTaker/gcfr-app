@@ -1443,8 +1443,18 @@ export function initGcfrV2Stock({
     renderCalculator();
   };
 
-  q("stockBackstockModeBtn")?.addEventListener("click", () => setScanMode("backstock"));
-  q("stockShopfloorModeBtn")?.addEventListener("click", () => setScanMode("shopfloor"));
+  const stockBackstockModeBtn = q("stockBackstockModeBtn");
+  const stockShopfloorModeBtn = q("stockShopfloorModeBtn");
+  if (stockBackstockModeBtn) stockBackstockModeBtn.onclick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setScanMode("backstock");
+  };
+  if (stockShopfloorModeBtn) stockShopfloorModeBtn.onclick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setScanMode("shopfloor");
+  };
   q("stockUnknownSellingBtn")?.addEventListener("click", () => chooseUnknownType("selling", "stock"));
   q("stockUnknownTicketBtn")?.addEventListener("click", () => chooseUnknownType("ticket", "stock"));
   q("stockUnknownFactoryBtn")?.addEventListener("click", () => chooseUnknownType("factory", "stock"));
