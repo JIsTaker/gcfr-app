@@ -155,10 +155,12 @@ export function createBarcodeScanner({
   const isAndroid = /Android/i.test(navigator.userAgent);
 
   function capture(source, profile, perspective = 0) {
-    const width = source.videoWidth;
-    const height = source.videoHeight;
+    const width = source.videoWidth || source.width;
+    const height = source.videoHeight || source.height;
 
-    const bounds = source.getBoundingClientRect();
+    const bounds = source === preview
+      ? source.getBoundingClientRect()
+      : { width, height };
     const cover = Math.max(
       bounds.width / width,
       bounds.height / height,
@@ -598,16 +600,41 @@ export function createBarcodeScanner({
           }
           if (!decoder) throw decoderLoadError || new Error("Barcode scanner could not load.");
 
-          status.textContent = "Reading snapshot…";
-          // Freeze two crops now. Every decoder/preprocessing pass below
-          // works from these exact pixels rather than grabbing later video frames.
-          const frozen = {
-            4: capture(preview, 4, 0),
-            2: capture(preview, 2, 0),
-          };
+          status.textContent = "Capturing photo…";
+
+          // SNAPSHOT is a still-photo path, not another live-video frame.
+          // ImageCapture asks the camera for a high-resolution still, then all
+          // barcode passes run against that one frozen photo.
+          let photoSource = preview;
+          let photoBitmap = null;
+          if (typeof ImageCapture !== "undefined") {
+            try {
+              const imageCapture = new ImageCapture(track);
+              const blob = await imageCapture.takePhoto();
+              photoBitmap = await createImageBitmap(blob);
+              photoSource = photoBitmap;
+            } catch {
+              // Some browsers expose ImageCapture but not takePhoto().
+              // Fall back to the current video frame.
+            }
+          }
+
+          const photoWidth = photoSource.width || photoSource.videoWidth;
+          const photoHeight = photoSource.height || photoSource.videoHeight;
+          const frozenCanvas = document.createElement("canvas");
+          frozenCanvas.width = photoWidth;
+          frozenCanvas.height = photoHeight;
+          const frozenContext = frozenCanvas.getContext("2d", { willReadFrequently: true });
+          frozenContext.imageSmoothingEnabled = false;
+          frozenContext.drawImage(photoSource, 0, 0, photoWidth, photoHeight);
+          photoBitmap?.close?.();
+
           const snapshotPasses = [
-            { profile: 4, preprocess: null },
+            { profile: 0, preprocess: null },
+            { profile: 1, preprocess: null },
             { profile: 2, preprocess: null },
+            { profile: 3, preprocess: null },
+            { profile: 4, preprocess: null },
             { profile: 4, preprocess: "contrast" },
             { profile: 2, preprocess: "contrast" },
             { profile: 4, preprocess: "binary:-12" },
@@ -616,9 +643,10 @@ export function createBarcodeScanner({
             { profile: 4, preprocess: "binary:0" },
           ];
 
+          status.textContent = "Reading captured photo…";
           for (const pass of snapshotPasses) {
             if (id !== session || !active) return;
-            let frame = cloneFrame(frozen[pass.profile]);
+            let frame = capture(frozenCanvas, pass.profile, 0);
             if (pass.preprocess) frame = preprocessBarcode(frame, pass.preprocess);
             const results = await decoder.readBarcodes(frame, options);
             const found = results.find((result) => result.isValid && result.text?.trim());
