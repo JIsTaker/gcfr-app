@@ -17,6 +17,7 @@ export function initGcfrV2Stock({
     selectedProduct: null,
     profile: null,
     packages: [],
+    barcodeLinks: [],
     selectedPackageId: "",
     pendingBarcode: "",
     pendingBarcodeMode: "",
@@ -201,25 +202,35 @@ export function initGcfrV2Stock({
 
     const code = state.selectedProduct.code;
 
-    const [{ data: profile, error: profileError }, { data: packages, error: packageError }] =
-      await Promise.all([
-        supabase
-          .from("gcfr_stock_profiles")
-          .select("product_code,stock_type,default_unit_weight_g,updated_at")
-          .eq("product_code", code)
-          .maybeSingle(),
-        supabase
-          .from("gcfr_factory_packages")
-          .select("id,factory_barcode,product_code,package_label,units_per_package,approx_weight_mode,fixed_package_weight_kg,updated_at")
-          .eq("product_code", code)
-          .order("updated_at", { ascending: false }),
-      ]);
+    const [
+      { data: profile, error: profileError },
+      { data: packages, error: packageError },
+      { data: barcodeLinks, error: barcodeError },
+    ] = await Promise.all([
+      supabase
+        .from("gcfr_stock_profiles")
+        .select("product_code,stock_type,default_unit_weight_g,updated_at")
+        .eq("product_code", code)
+        .maybeSingle(),
+      supabase
+        .from("gcfr_factory_packages")
+        .select("id,factory_barcode,product_code,package_label,units_per_package,approx_weight_mode,fixed_package_weight_kg,updated_at")
+        .eq("product_code", code)
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("product_barcodes")
+        .select("barcode,barcode_type")
+        .eq("product_code", code)
+        .order("barcode_type", { ascending: true }),
+    ]);
 
     if (profileError) throw profileError;
     if (packageError) throw packageError;
+    if (barcodeError) throw barcodeError;
 
     state.profile = profile || null;
     state.packages = packages || [];
+    state.barcodeLinks = barcodeLinks || [];
 
     if (!state.packages.some((row) => String(row.id) === String(state.selectedPackageId))) {
       state.selectedPackageId = state.packages[0]?.id || "";
@@ -235,6 +246,7 @@ export function initGcfrV2Stock({
     };
     state.profile = null;
     state.packages = [];
+    state.barcodeLinks = [];
     state.selectedPackageId = "";
     state.manualWeights = [];
 
@@ -328,6 +340,7 @@ export function initGcfrV2Stock({
     };
     state.profile = null;
     state.packages = [];
+    state.barcodeLinks = [];
     state.selectedPackageId = "";
 
     await loadProfileAndPackages(false);
@@ -345,6 +358,7 @@ export function initGcfrV2Stock({
     q("stockAddPackageBtn")?.classList.toggle("hidden", !state.profile);
 
     openProfileSetup(false);
+    renderBarcodeLinks();
     renderPackages();
 
     if (["selling", "ticket"].includes(state.pendingBarcodeMode) && state.pendingBarcode) {
@@ -450,6 +464,51 @@ export function initGcfrV2Stock({
     return row.approx_weight_mode === "fixed"
       ? `${cleanNumber(row.fixed_package_weight_kg).toFixed(2)} kg fixed package`
       : "Manual package weight";
+  }
+
+  function renderBarcodeLinks() {
+    const list = q("stockBarcodeLinkList");
+    if (!list) return;
+
+    const labels = {
+      product_code: "Selling Barcode",
+      ticket_barcode: "Store Ticket",
+      factory_barcode: "Factory Code",
+    };
+
+    const rows = [...state.barcodeLinks];
+
+    // Factory packages created before barcode-link persistence should still
+    // appear in the complete stock-ticket list.
+    for (const pack of state.packages) {
+      const barcode = String(pack.factory_barcode || "").trim();
+      if (
+        barcode
+        && !rows.some((row) =>
+          String(row.barcode || "").trim() === barcode
+          && row.barcode_type === "factory_barcode")
+      ) {
+        rows.push({ barcode, barcode_type: "factory_barcode" });
+      }
+    }
+
+    list.innerHTML = "";
+
+    for (const row of rows) {
+      const card = document.createElement("div");
+      card.className = "stock-package-row";
+      card.innerHTML = `
+        <div>
+          <strong>${escapeHtml(labels[row.barcode_type] || row.barcode_type || "Barcode")}</strong>
+          <span>${escapeHtml(String(row.barcode || ""))}</span>
+        </div>
+      `;
+      list.appendChild(card);
+    }
+
+    if (!rows.length) {
+      list.innerHTML = '<div class="empty-state">No Selling Barcode, Store Ticket or Factory Code linked.</div>';
+    }
   }
 
   function renderPackages() {
@@ -1099,6 +1158,8 @@ export function initGcfrV2Stock({
     }
 
     const name = state.selectedProduct.name;
+    await loadProfileAndPackages(false);
+    renderBarcodeLinks();
     closeUnknownBarcode();
     showToast(`${isTicket ? "Store Ticket" : "Selling Barcode"} linked to ${name}.`);
   }
