@@ -480,7 +480,13 @@ export function initGcfrV2Stock({
       }
 
       state.setupData = [...byCode.values()]
-        .filter((row) => row.stock_type || row.packages.length || row.barcodes.length)
+        .filter((row) =>
+          row.stock_type
+          || row.packages.length
+          || row.barcodes.some((item) =>
+            ["ticket_barcode", "factory_barcode"].includes(item.barcode_type)
+          )
+        )
         .sort((a, b) => a.name.localeCompare(b.name));
 
       renderSetupData();
