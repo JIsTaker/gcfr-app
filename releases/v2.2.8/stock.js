@@ -1052,8 +1052,8 @@ export function initGcfrV2Stock({
           } catch {}
           await handleBarcode(barcode);
         },
-        onTextCandidates: (candidates) =>
-          resolveTicketTextCandidate(candidates, false),
+        onTextCandidates: (candidates, meta) =>
+          resolveTicketTextCandidate(candidates, false, meta),
         onError: (error) => {
           console.error("Stock barcode scanner:", error);
           showToast(error.message || "Barcode scanner failed.", 6000);
@@ -1114,23 +1114,25 @@ export function initGcfrV2Stock({
     return data || null;
   }
 
-  async function resolveTicketTextCandidate(candidates, adminMode = false) {
+  async function resolveTicketTextCandidate(candidates, adminMode = false, meta = {}) {
     const values = [...new Set(
       (candidates || [])
         .map((value) => normalizeScannedBarcode(value))
         .filter((value) => /^\d{6,8}$/.test(value))
     )];
 
-    if (!values.length) return "";
+    if (!values.length) return { value: "", known: false };
 
     const catalog = await loadCatalog();
     const productCodes = new Set(catalog.map((product) => String(product.code || "").trim()));
 
     for (const value of values) {
-      if (productCodes.has(value)) return value;
+      if (productCodes.has(value)) return { value, known: true };
 
       const factory = await findFactoryBarcode(value);
-      if (factory && (adminMode || state.scanMode === "backstock")) return value;
+      if (factory && (adminMode || state.scanMode === "backstock")) {
+        return { value, known: true };
+      }
 
       const stored = await findStoredBarcode(value);
       if (!stored) continue;
@@ -1140,19 +1142,16 @@ export function initGcfrV2Stock({
         || state.scanMode === "shopfloor"
         || stored.barcode_type === "factory_barcode"
       ) {
-        return value;
+        return { value, known: true };
       }
     }
 
-    // OCR must still return a readable printed code even when the code has not
-    // been registered yet, otherwise damaged/new tickets can never reach the
-    // normal unknown-code registration flow.
-    if (values.length === 1) return values[0];
-
-    const sevenDigit = values.filter((value) => /^\d{7}$/.test(value));
-    if (sevenDigit.length === 1) return sevenDigit[0];
-
-    return "";
+    // Unknown printed codes are accepted only after OCR sees the same digits
+    // more than once. This prevents a single bad OCR pass from inventing a
+    // factory/ticket code while still allowing new codes to reach registration.
+    const counts = meta?.counts || {};
+    const confirmed = values.find((value) => Number(counts[value] || 0) >= 2);
+    return { value: confirmed || "", known: false };
   }
 
 
@@ -1455,8 +1454,8 @@ export function initGcfrV2Stock({
           if (!barcode) return;
           await handleAdminBarcode(barcode);
         },
-        onTextCandidates: (candidates) =>
-          resolveTicketTextCandidate(candidates, true),
+        onTextCandidates: (candidates, meta) =>
+          resolveTicketTextCandidate(candidates, true, meta),
         onError: (error) => {
           console.error("Admin Stock scanner:", error);
           showToast(error.message || "Barcode scanner failed.", 6000);
