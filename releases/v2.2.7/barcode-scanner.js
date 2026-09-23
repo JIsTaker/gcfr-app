@@ -566,7 +566,115 @@ export function createBarcodeScanner({
       if (id !== session) return;
 
       status.textContent =
-        "Fill the guide with the barcode and keep every bar sharp.";
+        "Fill the guide with the barcode. Tap the guide for a focused snapshot.";
+
+      let snapshotBusy = false;
+
+      function cloneFrame(frame) {
+        return new ImageData(
+          new Uint8ClampedArray(frame.data),
+          frame.width,
+          frame.height,
+        );
+      }
+
+      async function decodeSnapshot() {
+        if (snapshotBusy || processing || id !== session || !active) return;
+        snapshotBusy = true;
+        status.textContent = "Focusing for snapshot…";
+
+        try {
+          // User-requested focus only: never reintroduce focus hunting into the
+          // live scan loop.
+          if (capabilities.focusMode?.includes("single-shot")) {
+            await track.applyConstraints({
+              advanced: [{ focusMode: "single-shot" }],
+            });
+          }
+          await new Promise((resolve) => setTimeout(resolve, 420));
+          if (id !== session || !active) return;
+
+          if (!decoder) {
+            decoder = await decoderTask;
+          }
+          if (!decoder) throw decoderLoadError || new Error("Barcode scanner could not load.");
+
+          status.textContent = "Reading snapshot…";
+          // Freeze two crops now. Every decoder/preprocessing pass below
+          // works from these exact pixels rather than grabbing later video frames.
+          const frozen = {
+            4: capture(preview, 4, 0),
+            2: capture(preview, 2, 0),
+          };
+          const snapshotPasses = [
+            { profile: 4, preprocess: null },
+            { profile: 2, preprocess: null },
+            { profile: 4, preprocess: "contrast" },
+            { profile: 2, preprocess: "contrast" },
+            { profile: 4, preprocess: "binary:-12" },
+            { profile: 2, preprocess: "binary:-12" },
+            { profile: 4, preprocess: "binary:-24" },
+            { profile: 4, preprocess: "binary:0" },
+          ];
+
+          for (const pass of snapshotPasses) {
+            if (id !== session || !active) return;
+            let frame = cloneFrame(frozen[pass.profile]);
+            if (pass.preprocess) frame = preprocessBarcode(frame, pass.preprocess);
+            const results = await decoder.readBarcodes(frame, options);
+            const found = results.find((result) => result.isValid && result.text?.trim());
+            if (found) {
+              processing = true;
+              stop();
+              try {
+                await onResult(found.text.trim());
+              } catch (error) {
+                onError(error);
+              } finally {
+                processing = false;
+              }
+              return;
+            }
+          }
+
+          status.textContent =
+            "Snapshot could not read it. Re-align the barcode and tap the guide again.";
+        } catch (error) {
+          if (id === session) {
+            status.textContent = "Snapshot failed. Re-align and tap the guide again.";
+          }
+        } finally {
+          snapshotBusy = false;
+          // Restore continuous AF once, after the deliberate snapshot attempt.
+          if (
+            id === session &&
+            active &&
+            capabilities.focusMode?.includes("continuous")
+          ) {
+            try {
+              await track.applyConstraints({
+                advanced: [{ focusMode: "continuous" }],
+              });
+            } catch {
+              // Optional camera control.
+            }
+          }
+        }
+      }
+
+      const guide = overlay.querySelector(".barcode-guide");
+      if (guide) {
+        guide.setAttribute("role", "button");
+        guide.setAttribute("tabindex", "0");
+        guide.setAttribute("aria-label", "Tap to focus and scan snapshot");
+        guide.onclick = decodeSnapshot;
+        guide.onkeydown = (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            decodeSnapshot();
+          }
+        };
+      }
 
       let frames = 0;
       let failures = 0;
