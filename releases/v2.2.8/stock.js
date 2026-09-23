@@ -984,6 +984,14 @@ export function initGcfrV2Stock({
       }
     }
 
+    // OCR must still return a readable printed code even when the code has not
+    // been registered yet, otherwise damaged/new tickets can never reach the
+    // normal unknown-code registration flow.
+    if (values.length === 1) return values[0];
+
+    const sevenDigit = values.filter((value) => /^\d{7}$/.test(value));
+    if (sevenDigit.length === 1) return sevenDigit[0];
+
     return "";
   }
 
