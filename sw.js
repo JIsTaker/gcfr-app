@@ -1,4 +1,4 @@
-const CORE_CACHE = "gcfr-core-v2";
+const CORE_CACHE = "gcfr-core-v3";
 const RELEASE_CACHE_PREFIX = "gcfr-release-";
 
 const scopeUrl = new URL(self.registration.scope);
@@ -38,7 +38,11 @@ async function fetchReleaseState() {
 async function cacheRelease(version) {
   if (!version) return;
 
-  const cache = await caches.open(`${RELEASE_CACHE_PREFIX}${version}`);
+  // A public version can receive same-version patches. Rebuild that release
+  // cache so v2.2.7 does not stay pinned to the first v2.2.7 files forever.
+  const cacheName = `${RELEASE_CACHE_PREFIX}${version}`;
+  await caches.delete(cacheName);
+  const cache = await caches.open(cacheName);
   const base = `releases/${version}/`;
 
   await cache.addAll([
@@ -124,11 +128,10 @@ self.addEventListener("fetch", (event) => {
 
   if (relativePath.startsWith("releases/")) {
     event.respondWith((async () => {
-      const cached = await caches.match(request);
-      if (cached) return cached;
-
       try {
-        const response = await fetch(request);
+        // Same-version patches must reach the device. Prefer network for
+        // release assets, then refresh the version cache; use cache offline.
+        const response = await fetch(request, { cache: "no-store" });
 
         if (response.ok) {
           const parts = relativePath.split("/");
@@ -139,6 +142,9 @@ self.addEventListener("fetch", (event) => {
 
         return response;
       } catch {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+
         if (request.mode === "navigate") {
           return (await caches.match(atScope("offline.html")))
             || new Response("Offline", { status: 503 });
