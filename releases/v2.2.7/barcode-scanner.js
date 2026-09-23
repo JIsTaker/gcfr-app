@@ -600,34 +600,20 @@ export function createBarcodeScanner({
           }
           if (!decoder) throw decoderLoadError || new Error("Barcode scanner could not load.");
 
-          status.textContent = "Capturing photo…";
+          status.textContent = "Capturing snapshot…";
 
-          // SNAPSHOT is a still-photo path, not another live-video frame.
-          // ImageCapture asks the camera for a high-resolution still, then all
-          // barcode passes run against that one frozen photo.
-          let photoSource = preview;
-          let photoBitmap = null;
-          if (typeof ImageCapture !== "undefined") {
-            try {
-              const imageCapture = new ImageCapture(track);
-              const blob = await imageCapture.takePhoto();
-              photoBitmap = await createImageBitmap(blob);
-              photoSource = photoBitmap;
-            } catch {
-              // Some browsers expose ImageCapture but not takePhoto().
-              // Fall back to the current video frame.
-            }
-          }
-
-          const photoWidth = photoSource.width || photoSource.videoWidth;
-          const photoHeight = photoSource.height || photoSource.videoHeight;
+          // Freeze the already-focused preview pixels immediately. Do not call
+          // ImageCapture.takePhoto(): on Android that invokes the camera's still
+          // capture pipeline and can restart autofocus/hunting after one shot.
+          // The frozen canvas is the cached image used for every decode pass.
+          const photoWidth = preview.videoWidth;
+          const photoHeight = preview.videoHeight;
           const frozenCanvas = document.createElement("canvas");
           frozenCanvas.width = photoWidth;
           frozenCanvas.height = photoHeight;
           const frozenContext = frozenCanvas.getContext("2d", { willReadFrequently: true });
           frozenContext.imageSmoothingEnabled = false;
-          frozenContext.drawImage(photoSource, 0, 0, photoWidth, photoHeight);
-          photoBitmap?.close?.();
+          frozenContext.drawImage(preview, 0, 0, photoWidth, photoHeight);
 
           const snapshotPasses = [
             { profile: 0, preprocess: null },
@@ -643,7 +629,7 @@ export function createBarcodeScanner({
             { profile: 4, preprocess: "binary:0" },
           ];
 
-          status.textContent = "Reading captured photo…";
+          status.textContent = "Reading cached snapshot…";
           for (const pass of snapshotPasses) {
             if (id !== session || !active) return;
             let frame = capture(frozenCanvas, pass.profile, 0);
