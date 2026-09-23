@@ -363,7 +363,12 @@ export function createBarcodeScanner({
       return imageData;
     }
 
-    if (mode === "binary" || mode === "binaryDark" || mode === "binaryLight") {
+    if (
+      mode === "binary" ||
+      mode === "binaryDark" ||
+      mode === "binaryLight" ||
+      mode.startsWith("binary:")
+    ) {
       // Adaptive-by-frame threshold for faded/dirty thermal printing.
       let total = 0;
       let samples = 0;
@@ -375,10 +380,16 @@ export function createBarcodeScanner({
       }
 
       const mean = total / Math.max(1, samples);
-      const bias =
-        mode === "binaryDark" ? -24 :
-        mode === "binaryLight" ? 2 :
-        -12;
+      const requestedBias = mode.startsWith("binary:")
+        ? Number(mode.slice("binary:".length))
+        : NaN;
+      const bias = Number.isFinite(requestedBias)
+        ? requestedBias
+        : mode === "binaryDark"
+          ? -24
+          : mode === "binaryLight"
+            ? 2
+            : -12;
       const threshold = Math.max(82, Math.min(198, mean + bias));
 
       for (let i = 0; i < data.length; i += 4) {
@@ -605,15 +616,32 @@ export function createBarcodeScanner({
               // Rotate full / wide / tight crops.
               // Android uses smaller buffers so the scan loop stays responsive.
               const androidPasses = [
+                // Fast path for normal labels and the preprocessing that already
+                // proved effective on faded thermal tickets.
                 { profile: 2, preprocess: null },
                 { profile: 4, preprocess: null },
                 { profile: 2, preprocess: "contrast" },
                 { profile: 4, preprocess: "contrast" },
-                { profile: 2, preprocess: "binary" },
-                { profile: 4, preprocess: "binary" },
+                { profile: 2, preprocess: "binary:-12" },
+                { profile: 4, preprocess: "binary:-12" },
+
+                // Thermal printers vary heavily in darkness and ink spread.
+                // Sweep several mean-relative thresholds instead of betting on
+                // one global threshold. Tight profiles stay first for speed.
+                { profile: 2, preprocess: "binary:-32" },
+                { profile: 4, preprocess: "binary:-32" },
+                { profile: 2, preprocess: "binary:-24" },
+                { profile: 4, preprocess: "binary:-24" },
+                { profile: 2, preprocess: "binary:-16" },
+                { profile: 4, preprocess: "binary:-16" },
+                { profile: 2, preprocess: "binary:-8" },
+                { profile: 4, preprocess: "binary:-8" },
+                { profile: 2, preprocess: "binary:0" },
+                { profile: 4, preprocess: "binary:0" },
+                { profile: 2, preprocess: "binary:8" },
+                { profile: 4, preprocess: "binary:8" },
                 { profile: 2, preprocess: "contrastStrong" },
-                { profile: 4, preprocess: "binaryDark" },
-                { profile: 2, preprocess: "binaryLight" },
+                { profile: 4, preprocess: "contrastStrong" },
                 { profile: 1, preprocess: null },
                 { profile: 3, preprocess: "contrast" },
                 { profile: 0, preprocess: null },
