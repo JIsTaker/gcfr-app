@@ -1055,11 +1055,18 @@
           </div>
 
           <div class="admin-stock-scan-row">
+            <label>Registration type
+              <select id="adminStockRegistrationMode">
+                <option value="ticket">Product Ticket</option>
+                <option value="selling">Selling Barcode</option>
+                <option value="factory">Factory Code</option>
+              </select>
+            </label>
             <button id="adminStockScanBtn" class="primary admin-stock-scan-btn" type="button">
               <span aria-hidden="true">▣</span>
-              Scan barcode
+              Scan to register
             </button>
-            <span class="item-sub">Scan a Store Ticket, Product Code or Factory Code.</span>
+            <span id="adminStockStep" class="item-sub" role="status">Step 1 · Scan the barcode to register.</span>
           </div>
 
           <div id="adminStockScannerWrap" class="scanner-wrap hidden">
@@ -1089,6 +1096,7 @@
               </div>
 
               <div class="product-search-block">
+                <button id="adminStockLinkScanBtn" class="primary full" type="button">Step 2 · Scan product ticket / selling barcode</button>
                 <label class="search-label" for="adminStockLinkSearch">Find existing product</label>
                 <input
                   id="adminStockLinkSearch"
@@ -1122,11 +1130,12 @@
           </div>
         </div>
 
-        <div class="card stock-setup-data-card">
+        <details id="stockSetupDataSection" class="card stock-setup-data-card">
+          <summary>Product &amp; Barcode Database</summary>
           <div class="stock-section-head">
             <div>
               <h3>Configured Stock Data</h3>
-              <p class="muted">Only products with a Factory Code are shown.</p>
+              <p class="muted">Search products, tickets, selling barcodes and factory codes.</p>
             </div>
             <button id="stockSetupDataRefreshBtn" class="secondary" type="button">Refresh</button>
           </div>
@@ -1138,10 +1147,11 @@
             placeholder="Search configured product, Product Code or stock barcode"
           >
           <div id="stockSetupDataCount" class="item-sub"></div>
+          <button id="stockSetupDataScanBtn" class="secondary full" type="button">Search by scanning barcode</button>
           <div id="stockSetupDataList" class="stock-package-list">
             <div class="empty-state">Loading stock data...</div>
           </div>
-        </div>
+        </details>
 
         <div id="adminStockSelected" class="hidden">
           <div class="card stock-selected-card">
@@ -1185,9 +1195,11 @@
                 <p class="muted">Selling Barcode, Store Ticket and Factory Code linked to this product.</p>
               </div>
             </div>
+            <details><summary>Show barcode links</summary>
             <div id="stockBarcodeLinkList" class="stock-package-list">
               <div class="empty-state">No barcode links saved.</div>
             </div>
+            </details>
           </div>
 
           <div class="card stock-packages-card">
@@ -1199,9 +1211,11 @@
               <button id="stockAddPackageBtn" class="secondary hidden" type="button">+ Package</button>
             </div>
 
+            <details><summary>Show saved packages</summary>
             <div id="stockPackageList" class="stock-package-list">
               <div class="empty-state">No package specifications saved.</div>
             </div>
+            </details>
 
             <div id="stockPackagePanel" class="stock-package-panel hidden">
               <h3 id="stockPackageEditorTitle">Add Package Specification</h3>

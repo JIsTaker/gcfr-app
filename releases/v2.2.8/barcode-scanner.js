@@ -53,12 +53,26 @@ async function loadOcrWorker() {
 }
 
 function extractTicketNumberCandidates(text) {
-  const matches = String(text || "").match(/\d(?:[\s._-]?\d){5,7}/g) || [];
+  // Never truncate a longer barcode or join digits across separate lines.
+  const matches = String(text || "").match(/\d+(?:[ \t]+\d+)?/g) || [];
   return [...new Set(
     matches
       .map((value) => value.replace(/\D/g, ""))
       .filter((value) => /^\d{6,8}$/.test(value))
   )];
+}
+
+function createScanConfirmation() {
+  let candidate = "", hits = 0, lastFrame = -1, lastAt = 0;
+  return (value, frameTime, now) => {
+    if (!value) return "";
+    if (value !== candidate || now - lastAt > 1800) {
+      candidate = value; hits = 0; lastFrame = -1;
+    }
+    if (frameTime !== lastFrame) { hits++; lastFrame = frameTime; }
+    lastAt = now;
+    return hits >= 2 ? candidate : "";
+  };
 }
 
 async function loadNativeDetector() {
@@ -354,7 +368,8 @@ export function createBarcodeScanner({
       context.drawImage(
         source,
         (width - sw) / 2,
-        Math.max(0, Math.min(height - sh, (height - sh) / 2 + verticalOffset * visibleHeight)),
+        Math.max((height - visibleHeight) / 2,
+          Math.min((height + visibleHeight) / 2 - sh, (height - sh) / 2 + verticalOffset * visibleHeight)),
         sw,
         sh,
         0,
@@ -528,9 +543,6 @@ export function createBarcodeScanner({
 
     try {
       const nativeDetectorTask = loadNativeDetector();
-      const ocrWarmTask = onTextCandidates
-        ? loadOcrWorker().catch(() => null)
-        : null;
 
       let media;
       try {
@@ -668,10 +680,10 @@ export function createBarcodeScanner({
 
       let frames = 0;
       let failures = 0;
-      let softCandidate = "";
-      let softCandidateHits = 0;
+      const confirmScan = createScanConfirmation();
       let ocrRunning = false;
       let lastOcrAt = 0;
+      let lastOcrFrame = -1;
       const ocrCandidateCounts = Object.create(null);
       const started = Date.now();
 
@@ -679,13 +691,16 @@ export function createBarcodeScanner({
         if (!onTextCandidates || ocrRunning || id !== session || !active) return;
 
         const now = Date.now();
-        if (now - started < 900 || now - lastOcrAt < 1800) return;
+        if (now - started < 2500 || now - lastOcrAt < 1800) return;
+        if (video.currentTime === lastOcrFrame) return;
+        lastOcrFrame = video.currentTime;
         lastOcrAt = now;
         ocrRunning = true;
 
         try {
-          const width = video.videoWidth;
-          const height = video.videoHeight;
+          capture(video, 0);
+          const width = canvas.width;
+          const height = canvas.height;
           if (!width || !height) return;
 
           const maxWidth = 1400;
@@ -695,24 +710,30 @@ export function createBarcodeScanner({
 
           ocrContext.save();
           ocrContext.filter = "grayscale(1) contrast(1.8)";
-          ocrContext.drawImage(video, 0, 0, ocrCanvas.width, ocrCanvas.height);
+          ocrContext.drawImage(canvas, 0, 0, ocrCanvas.width, ocrCanvas.height);
           ocrContext.restore();
 
           const previousStatus = status.textContent;
           status.textContent = "Reading printed ticket number…";
 
-          const worker = await (ocrWarmTask || loadOcrWorker());
+          const worker = await loadOcrWorker();
           if (id !== session || !active) return;
 
+          const seenInFrame = new Set();
           const recordCandidates = async (text) => {
             const candidates = extractTicketNumberCandidates(text);
             if (!candidates.length) return "";
 
             for (const value of new Set(candidates)) {
-              ocrCandidateCounts[value] = (ocrCandidateCounts[value] || 0) + 1;
+              if (!seenInFrame.has(value)) {
+                ocrCandidateCounts[value] = (ocrCandidateCounts[value] || 0) + 1;
+                seenInFrame.add(value);
+              }
             }
 
-            const accepted = await onTextCandidates(candidates, {
+            const confirmed = candidates.filter(value => ocrCandidateCounts[value] >= 2);
+            if (!confirmed.length) return "";
+            const accepted = await onTextCandidates(confirmed, {
               counts: { ...ocrCandidateCounts },
             });
             if (id !== session || !active) return "";
@@ -800,12 +821,15 @@ export function createBarcodeScanner({
             // from the live video frame. This is much lighter than decoding a
             // large ImageData buffer through WASM on every pass.
             let foundText = "";
+            const frameTime = video.currentTime;
 
             if (nativeDetector) {
               try {
                 // Native detection gets the live frame first. ZXing below also
                 // receives enlarged centre crops for small thermal tickets.
-                const nativeResults = await nativeDetector.detect(video);
+                // Restrict native reads to the visible central guide too.
+                capture(video, 1, 0, 0);
+                const nativeResults = await nativeDetector.detect(canvas);
                 const foundNative = nativeResults.find(
                   (result) => result.rawValue?.trim(),
                 );
@@ -905,35 +929,13 @@ export function createBarcodeScanner({
 
               if (foundFallback) {
                 foundText = foundFallback.text.trim();
-                softCandidate = "";
-                softCandidateHits = 0;
-              } else {
-                // Degraded thermal labels can yield a stable decoded payload
-                // while ZXing rejects the symbol-level validation. Never trust
-                // a single soft read: accept only the same numeric payload on
-                // two independent frames/passes.
-                const soft = results
-                  .map((result) => result.text?.trim() || "")
-                  .find((text) => /^\\d{5,14}$/.test(text));
-
-                if (soft) {
-                  if (soft === softCandidate) {
-                    softCandidateHits += 1;
-                  } else {
-                    softCandidate = soft;
-                    softCandidateHits = 1;
-                  }
-
-                  if (softCandidateHits >= 2) {
-                    foundText = softCandidate;
-                  }
-                }
               }
             }
 
             if (id !== session) return;
 
             failures = 0;
+            foundText = confirmScan(foundText, frameTime, Date.now());
 
             if (foundText) {
               processing = true;

@@ -15,6 +15,7 @@ export function initGcfrV2Stock({
   const state = {
     scanner: null,
     adminScanner: null,
+    adminScanPurpose: "register",
     catalog: null,
     catalogPromise: null,
     selectedProduct: null,
@@ -35,6 +36,16 @@ export function initGcfrV2Stock({
   };
 
   const q = (id) => $(id);
+  function focusStep(id, message) {
+    const element = q(id);
+    if (!element) return;
+    for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+      if (parent.tagName === "DETAILS") parent.open = true;
+    }
+    if (message && q("adminStockStep")) q("adminStockStep").textContent = message;
+    element.scrollIntoView({behavior:"smooth",block:"center"});
+    element.focus({preventScroll:true});
+  }
   const cleanNumber = (value) => {
     const number = Number.parseFloat(String(value ?? "").replace(",", "."));
     return Number.isFinite(number) ? number : 0;
@@ -371,7 +382,14 @@ export function initGcfrV2Stock({
 
   async function searchForAdmin(rawQuery) {
     const catalog = await loadCatalog();
-    return rankProducts(catalog, rawQuery);
+    const ranked = rankProducts(catalog, rawQuery);
+    const barcode = normalizeScannedBarcode(rawQuery);
+    if (!barcode || /\s/.test(String(rawQuery).trim())) return ranked;
+    const stored = await findStoredBarcode(barcode);
+    const factory = stored ? null : await findFactoryBarcode(barcode);
+    const product = stored?.product || (factory ? await findProductByCode(factory.product_code) : null)
+      || await detectTicketProduct(barcode);
+    return product ? [product, ...ranked.filter(row => row.code !== product.code)] : ranked;
   }
 
   function renderProfileSummary() {
@@ -436,7 +454,7 @@ export function initGcfrV2Stock({
       ].join(" ")).includes(query);
     });
 
-    if (count) count.textContent = `${rows.length} of ${state.setupData.length} products with stock data`;
+    if (count) count.textContent = `${rows.length} of ${state.setupData.length} products`;
     list.innerHTML = "";
 
     if (!rows.length) {
@@ -445,8 +463,7 @@ export function initGcfrV2Stock({
     }
 
     for (const row of rows) {
-      const card = document.createElement("button");
-      card.type = "button";
+      const card = document.createElement("details");
       card.className = "stock-package-row stock-setup-data-row";
 
       const type = row.stock_type === "approx" ? "Approx" : row.stock_type === "each" ? "1 Each" : "No type";
@@ -459,15 +476,19 @@ export function initGcfrV2Stock({
       ];
 
       card.innerHTML = `
-        <div>
+        <summary>
           <strong>${escapeHtml(row.name || row.code)}</strong>
           <span>Product Code ${escapeHtml(row.code)} · ${escapeHtml(type)}${weight ? ` · ${weight} g` : ""}</span>
+        </summary><div>
           <small>${escapeHtml(codes.length ? codes.join(" · ") : "No linked barcode")}</small>
         </div>
-        <div class="stock-package-actions"><span class="secondary">Open</span></div>
+        <div class="stock-package-actions"><button type="button" class="secondary">Edit / Register</button></div>
       `;
 
-      card.onclick = () => selectForAdmin({ code: row.code, name: row.name || row.code });
+      card.querySelector("button").onclick = () => {
+        closeUnknownBarcode();
+        void selectForAdmin({ code: row.code, name: row.name || row.code });
+      };
       list.appendChild(card);
     }
   }
@@ -504,6 +525,7 @@ export function initGcfrV2Stock({
         return byCode.get(key);
       };
 
+      for (const product of catalog) ensure(product.code);
       for (const profile of profiles) Object.assign(ensure(profile.product_code), profile);
       for (const pack of packages) ensure(pack.product_code)?.packages.push(pack);
       for (const link of barcodeLinks) {
@@ -512,10 +534,6 @@ export function initGcfrV2Stock({
       }
 
       state.setupData = [...byCode.values()]
-        .filter((row) =>
-          row.packages.length
-          || row.barcodes.some((item) => item.barcode_type === "factory_barcode")
-        )
         .sort((a, b) => a.name.localeCompare(b.name));
 
       renderSetupData();
@@ -526,6 +544,7 @@ export function initGcfrV2Stock({
   }
 
   async function selectForAdmin(product) {
+    closePackageEditor();
     state.selectedProduct = {
       code: String(product.code || "").trim(),
       name: String(product.name || "").trim(),
@@ -554,9 +573,13 @@ export function initGcfrV2Stock({
     renderBarcodeLinks();
     renderPackages();
 
+    focusStep("stockTypeSelect", "Product selected · Review product type.");
+
     if (["selling", "ticket"].includes(state.pendingBarcodeMode) && state.pendingBarcode) {
-      await savePendingProductBarcode();
-      q("adminStockScanUnknownPanel")?.classList.add("hidden");
+      if (await savePendingProductBarcode()) {
+        q("adminStockScanUnknownPanel")?.classList.add("hidden");
+        focusStep("adminStockScanBtn", "Saved · Scan the next barcode.");
+      }
     } else if (state.pendingBarcodeMode === "factory" && state.pendingBarcode) {
       // Persist the scanned Factory Code -> product relationship immediately.
       // Package details can still be completed afterwards.
@@ -571,6 +594,7 @@ export function initGcfrV2Stock({
         showToast(linkError.message);
         return;
       }
+      void refreshSetupData();
 
       if (state.profile) {
         openPackageEditor({ factory_barcode: barcode });
@@ -809,7 +833,8 @@ export function initGcfrV2Stock({
       : "Add Package Specification";
 
     syncPackageEditorFields();
-    q("stockPackagePanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    focusStep(state.profile.stock_type === "each" ? "stockUnitsPerPackage" : "stockApproxWeightMode",
+      "Step 3 · Enter package quantity / weight and save.");
   }
 
   function closePackageEditor() {
@@ -875,6 +900,7 @@ export function initGcfrV2Stock({
     const saved = state.packages.find((row) => row.factory_barcode === barcode);
     if (saved) state.selectedPackageId = saved.id;
     renderCalculator();
+    focusStep("adminStockScanBtn", "Package saved · Scan the next barcode.");
   }
 
   function selectedPackage() {
@@ -1590,7 +1616,7 @@ export function initGcfrV2Stock({
           mode === "ticket"
             ? "Store Ticket selected. Search the product to link this ticket barcode."
             : "Selling Barcode selected. Search the product to link this selling barcode.";
-        q("adminStockSearch")?.focus();
+        focusStep("adminStockLinkScanBtn", "Step 2 · Scan the product ticket or search below.");
       }
       return;
     }
@@ -1599,7 +1625,7 @@ export function initGcfrV2Stock({
       q("adminStockManualRegisterPanel")?.classList.remove("hidden");
       q("adminStockScanUnknownMessage").textContent =
         "Factory Code selected. Search the product above, or register a new product. Package setup will open next.";
-      q("adminStockSearch")?.focus();
+      focusStep("adminStockLinkScanBtn", "Step 2 · Scan selling barcode / product ticket, or search below.");
       return;
     }
 
@@ -1714,8 +1740,9 @@ export function initGcfrV2Stock({
     return state.adminScanner;
   }
 
-  function startAdminStockScanner() {
-    closeUnknownBarcode();
+  function startAdminStockScanner(purpose = "register") {
+    state.adminScanPurpose = typeof purpose === "string" ? purpose : "register";
+    if (state.adminScanPurpose === "register") closeUnknownBarcode();
     return getAdminStockScanner().start();
   }
 
@@ -1728,6 +1755,39 @@ export function initGcfrV2Stock({
   async function handleAdminBarcode(rawBarcode) {
     const barcode = normalizeScannedBarcode(rawBarcode);
     if (!barcode) return;
+
+    if (state.adminScanPurpose === "search") {
+      q("stockSetupDataSearch").value = barcode;
+      await refreshSetupData();
+      focusStep("stockSetupDataSearch");
+      return;
+    }
+    if (state.adminScanPurpose === "link") {
+      if (!state.pendingBarcode || !state.pendingBarcodeMode) return;
+      try {
+        const stored = await findStoredBarcode(barcode);
+        if (stored?.barcode_type === "factory_barcode"
+          || (state.pendingBarcodeMode === "selling" && stored?.barcode_type === "product_code")) {
+          showToast("Scan the product ticket / product code, or search for the product.");
+          return;
+        }
+        const inferred = stored ? null : await detectTicketProduct(barcode);
+        const product = stored?.product || inferred || await findProductByCode(barcode);
+        if (!product) {
+          showToast("Product not found. Search manually below; the first barcode is still saved.");
+          focusStep("adminStockLinkSearch");
+          return;
+        }
+        if (inferred) {
+          const {error} = await supabase.rpc("gcfr_link_stock_barcode", {
+            _barcode:barcode, _product_code:product.code, _barcode_type:"ticket_barcode",
+          });
+          if (error) throw error;
+        }
+        await selectForAdmin(product);
+      } catch (error) { showToast(error.message || "Could not link barcode."); }
+      return;
+    }
 
     state.pendingBarcode = "";
     state.pendingBarcodeMode = "";
@@ -1762,9 +1822,12 @@ export function initGcfrV2Stock({
           _barcode_type: "ticket_barcode",
         });
 
-        if (error) console.warn("Could not persist inferred ticket:", error);
-
-        showToast(`Store Ticket detected: ${inferredTicket.name}`);
+        if (error) throw error;
+        await loadProfileAndPackages(false);
+        renderBarcodeLinks();
+        void refreshSetupData();
+        focusStep("adminStockScanBtn", "Ticket linked · Scan the next barcode.");
+        showToast(`Store Ticket linked: ${inferredTicket.name}`);
         return;
       }
 
@@ -1786,6 +1849,8 @@ export function initGcfrV2Stock({
         behavior: "smooth",
         block: "nearest",
       });
+      const mode = q("adminStockRegistrationMode")?.value || "ticket";
+      await chooseUnknownType(mode, "admin");
     } catch (error) {
       showToast(error.message || "Could not read this barcode.");
     }
@@ -1844,6 +1909,8 @@ export function initGcfrV2Stock({
     state.manualWeights = [];
 
     closeUnknownBarcode();
+    state.adminScanPurpose = "register";
+    if (q("stockSetupDataSection")) q("stockSetupDataSection").open = false;
 
     if (q("stockProductSearch")) q("stockProductSearch").value = "";
     hideSearchResults();
@@ -1932,6 +1999,12 @@ export function initGcfrV2Stock({
   q("stockUnknownCloseBtn").onclick = closeUnknownBarcode;
 
   q("adminStockScanBtn")?.addEventListener("click", startAdminStockScanner);
+  q("adminStockLinkScanBtn")?.addEventListener("click", () => startAdminStockScanner("link"));
+  q("stockSetupDataScanBtn")?.addEventListener("click", () => startAdminStockScanner("search"));
+  q("adminStockRegistrationMode")?.addEventListener("change", () => {
+    closeUnknownBarcode();
+    focusStep("adminStockScanBtn", "Step 1 · Scan the barcode to register.");
+  });
   q("adminStockStopScannerBtn")?.addEventListener("click", stopAdminStockScanner);
   q("adminStockUnknownSellingBtn")?.addEventListener("click", () => chooseUnknownType("selling", "admin"));
   q("adminStockUnknownTicketBtn")?.addEventListener("click", () => chooseUnknownType("ticket", "admin"));
@@ -1984,6 +2057,8 @@ export function initGcfrV2Stock({
   });
 
   q("stockSetupDataSearch")?.addEventListener("input", renderSetupData);
+  // Keep the database below every registration / package editor.
+  if (q("stockSetupDataSection")) q("adminStockSetupView")?.appendChild(q("stockSetupDataSection"));
   q("stockSetupDataRefreshBtn")?.addEventListener("click", refreshSetupData);
 
   q("stockUseProductWeight")?.addEventListener("change", syncWeightMode);
