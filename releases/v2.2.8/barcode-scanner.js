@@ -38,6 +38,7 @@ async function loadOcrWorker() {
 
       await worker.setParameters({
         tessedit_char_whitelist: "0123456789",
+        tessedit_pageseg_mode: "11",
         preserve_interword_spaces: "1",
       });
 
@@ -699,10 +700,47 @@ export function createBarcodeScanner({
           const worker = await loadOcrWorker();
           if (id !== session || !active) return;
 
-          const result = await worker.recognize(ocrCanvas);
+          const texts = [];
+          const full = await worker.recognize(ocrCanvas);
+          texts.push(full?.data?.text || "");
           if (id !== session || !active) return;
 
-          const candidates = extractTicketNumberCandidates(result?.data?.text || "");
+          // Ticket layouts vary. If the whole-frame pass misses the printed
+          // code, scan overlapping horizontal bands so a 6-8 digit code can
+          // be found above, below or beside the barcode.
+          const bands = [
+            { top: 0.00, height: 0.40 },
+            { top: 0.20, height: 0.40 },
+            { top: 0.40, height: 0.40 },
+            { top: 0.60, height: 0.40 },
+          ];
+
+          let candidates = extractTicketNumberCandidates(texts.join("\n"));
+
+          if (!candidates.length) {
+            for (const band of bands) {
+              const top = Math.round(ocrCanvas.height * band.top);
+              const heightPx = Math.min(
+                ocrCanvas.height - top,
+                Math.round(ocrCanvas.height * band.height),
+              );
+              if (heightPx <= 0) continue;
+
+              const bandResult = await worker.recognize(ocrCanvas, {
+                rectangle: {
+                  left: 0,
+                  top,
+                  width: ocrCanvas.width,
+                  height: heightPx,
+                },
+              });
+              texts.push(bandResult?.data?.text || "");
+              candidates = extractTicketNumberCandidates(texts.join("\n"));
+              if (candidates.length) break;
+              if (id !== session || !active) return;
+            }
+          }
+
           if (!candidates.length) {
             status.textContent = previousStatus;
             return;
