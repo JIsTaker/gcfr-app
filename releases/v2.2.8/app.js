@@ -7142,6 +7142,7 @@ function showAdminStockSetupView() {
   $("adminStockSetupView")?.classList.remove("hidden");
 
   $("screenTitle").textContent = "Stock Setup";
+  void stockController?.refreshSetupData?.();
 }
 
 $("openBarcodeDataManagerBtn").onclick = async () => {

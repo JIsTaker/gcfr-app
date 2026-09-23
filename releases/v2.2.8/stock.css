@@ -1171,3 +1171,10 @@ body {
 .stock-mode-btn input[type="radio"]{position:absolute;opacity:0;pointer-events:none}
 .stock-mode-btn{cursor:pointer;user-select:none;-webkit-user-select:none}
 .stock-mode-btn:has(input:checked){border-color:#77b88e;background:#eaf7ee;color:#17603d}
+
+.stock-setup-data-card{display:grid;gap:10px}
+#stockSetupDataCount{margin-top:2px}
+.stock-setup-data-row{width:100%;text-align:left;cursor:pointer}
+.stock-setup-data-row>div:first-child{min-width:0}
+.stock-setup-data-row small{display:block;margin-top:4px;color:#6f8075;white-space:normal;word-break:break-word}
+.stock-setup-data-row .stock-package-actions{flex:0 0 auto}

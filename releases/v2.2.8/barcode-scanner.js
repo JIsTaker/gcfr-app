@@ -528,6 +528,9 @@ export function createBarcodeScanner({
 
     try {
       const nativeDetectorTask = loadNativeDetector();
+      const ocrWarmTask = onTextCandidates
+        ? loadOcrWorker().catch(() => null)
+        : null;
 
       let media;
       try {
@@ -675,7 +678,7 @@ export function createBarcodeScanner({
         if (!onTextCandidates || ocrRunning || id !== session || !active) return;
 
         const now = Date.now();
-        if (now - started < 4200 || now - lastOcrAt < 6500) return;
+        if (now - started < 1500 || now - lastOcrAt < 3200) return;
         lastOcrAt = now;
         ocrRunning = true;
 
@@ -684,7 +687,7 @@ export function createBarcodeScanner({
           const height = video.videoHeight;
           if (!width || !height) return;
 
-          const maxWidth = 1800;
+          const maxWidth = 1200;
           const scale = Math.min(1, maxWidth / width);
           ocrCanvas.width = Math.max(1, Math.round(width * scale));
           ocrCanvas.height = Math.max(1, Math.round(height * scale));
@@ -697,7 +700,7 @@ export function createBarcodeScanner({
           const previousStatus = status.textContent;
           status.textContent = "Reading printed ticket number…";
 
-          const worker = await loadOcrWorker();
+          const worker = await (ocrWarmTask || loadOcrWorker());
           if (id !== session || !active) return;
 
           const texts = [];
@@ -709,10 +712,9 @@ export function createBarcodeScanner({
           // code, scan overlapping horizontal bands so a 6-8 digit code can
           // be found above, below or beside the barcode.
           const bands = [
-            { top: 0.00, height: 0.40 },
-            { top: 0.20, height: 0.40 },
-            { top: 0.40, height: 0.40 },
-            { top: 0.60, height: 0.40 },
+            { top: 0.00, height: 0.48 },
+            { top: 0.26, height: 0.48 },
+            { top: 0.52, height: 0.48 },
           ];
 
           let candidates = extractTicketNumberCandidates(texts.join("\n"));
