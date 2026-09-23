@@ -326,7 +326,7 @@ export function createBarcodeScanner({
   function preprocessBarcode(imageData, mode) {
     const data = imageData.data;
 
-    if (mode === "contrast") {
+    if (mode === "contrast" || mode === "contrastStrong") {
       // Stretch local barcode contrast and lightly sharpen dark/light edges.
       // Thermal labels often have grey paper, faded gaps and ink spread.
       let min = 255;
@@ -346,10 +346,15 @@ export function createBarcodeScanner({
         const y = Math.round(
           data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114,
         );
-        const stretched = Math.max(
+        let stretched = Math.max(
           0,
           Math.min(255, Math.round(((y - min) * 255) / span)),
         );
+        if (mode === "contrastStrong") {
+          stretched = stretched < 128
+            ? Math.max(0, Math.round((stretched - 128) * 1.28 + 128))
+            : Math.min(255, Math.round((stretched - 128) * 1.18 + 128));
+        }
         data[i] = stretched;
         data[i + 1] = stretched;
         data[i + 2] = stretched;
@@ -358,7 +363,7 @@ export function createBarcodeScanner({
       return imageData;
     }
 
-    if (mode === "binary") {
+    if (mode === "binary" || mode === "binaryDark" || mode === "binaryLight") {
       // Adaptive-by-frame threshold for faded/dirty thermal printing.
       let total = 0;
       let samples = 0;
@@ -369,7 +374,12 @@ export function createBarcodeScanner({
         samples += 1;
       }
 
-      const threshold = Math.max(90, Math.min(190, total / Math.max(1, samples) - 12));
+      const mean = total / Math.max(1, samples);
+      const bias =
+        mode === "binaryDark" ? -24 :
+        mode === "binaryLight" ? 2 :
+        -12;
+      const threshold = Math.max(82, Math.min(198, mean + bias));
 
       for (let i = 0; i < data.length; i += 4) {
         const y =
@@ -601,6 +611,9 @@ export function createBarcodeScanner({
                 { profile: 4, preprocess: "contrast" },
                 { profile: 2, preprocess: "binary" },
                 { profile: 4, preprocess: "binary" },
+                { profile: 2, preprocess: "contrastStrong" },
+                { profile: 4, preprocess: "binaryDark" },
+                { profile: 2, preprocess: "binaryLight" },
                 { profile: 1, preprocess: null },
                 { profile: 3, preprocess: "contrast" },
                 { profile: 0, preprocess: null },
