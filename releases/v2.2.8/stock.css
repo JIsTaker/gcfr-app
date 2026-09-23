@@ -1193,3 +1193,11 @@ body {
 .stock-shopfloor-result>strong{font-size:18px;color:#173924}
 .stock-shopfloor-result>small{grid-column:1 / -1;color:#718177}
 @media(max-width:420px){.stock-backstock-entry{grid-template-columns:auto 1fr}.stock-used-submit-btn{grid-column:2}.stock-new-package-btn{grid-row:1 / span 2;height:100%}}
+
+
+/* Shopfloor layer activation */
+.stock-layer-toggle{min-height:38px;border:1px solid #d9e4dc;background:#f3f6f4;color:#6c7a70;border-radius:10px;font-size:11px;font-weight:850;padding:0 9px;white-space:nowrap}
+.stock-layer-toggle.active{border-color:#77b88e;background:#eaf7ee;color:#17603d}
+.stock-layer-row:not(.active) input{background:#f3f5f4;color:#9aa59e}
+.stock-layer-row:not(.active)>span,.stock-layer-row:not(.active) .stock-layer-total{opacity:.45}
+.stock-layer-row.active{border-color:#d8e9dd}

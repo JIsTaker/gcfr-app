@@ -466,25 +466,25 @@
               <input id="stockShopfloorLooseQty" inputmode="numeric" type="number" min="0" step="1" placeholder="0">
             </label>
             <div class="stock-layers">
-              <div class="stock-layer-row">
-                <strong>Layer 1</strong>
+              <div class="stock-layer-row active" data-layer="1">
+                <button id="stockLayer1Toggle" class="stock-layer-toggle active" type="button" aria-pressed="true">Layer 1</button>
                 <input id="stockLayer1Across" inputmode="numeric" type="number" min="0" step="1" placeholder="Across">
                 <span>×</span>
                 <input id="stockLayer1Deep" inputmode="numeric" type="number" min="0" step="1" placeholder="Deep">
                 <div id="stockLayer1Total" class="stock-layer-total">0</div>
               </div>
-              <div class="stock-layer-row">
-                <strong>Layer 2</strong>
-                <input id="stockLayer2Across" inputmode="numeric" type="number" min="0" step="1" placeholder="Across">
+              <div class="stock-layer-row" data-layer="2">
+                <button id="stockLayer2Toggle" class="stock-layer-toggle" type="button" aria-pressed="false">Layer 2</button>
+                <input id="stockLayer2Across" inputmode="numeric" type="number" min="0" step="1" placeholder="Across" disabled>
                 <span>×</span>
-                <input id="stockLayer2Deep" inputmode="numeric" type="number" min="0" step="1" placeholder="Deep">
+                <input id="stockLayer2Deep" inputmode="numeric" type="number" min="0" step="1" placeholder="Deep" disabled>
                 <div id="stockLayer2Total" class="stock-layer-total">0</div>
               </div>
-              <div class="stock-layer-row">
-                <strong>Layer 3</strong>
-                <input id="stockLayer3Across" inputmode="numeric" type="number" min="0" step="1" placeholder="Across">
+              <div class="stock-layer-row" data-layer="3">
+                <button id="stockLayer3Toggle" class="stock-layer-toggle" type="button" aria-pressed="false">Layer 3</button>
+                <input id="stockLayer3Across" inputmode="numeric" type="number" min="0" step="1" placeholder="Across" disabled>
                 <span>×</span>
-                <input id="stockLayer3Deep" inputmode="numeric" type="number" min="0" step="1" placeholder="Deep">
+                <input id="stockLayer3Deep" inputmode="numeric" type="number" min="0" step="1" placeholder="Deep" disabled>
                 <div id="stockLayer3Total" class="stock-layer-total">0</div>
               </div>
             </div>

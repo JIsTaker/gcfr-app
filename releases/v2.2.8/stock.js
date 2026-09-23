@@ -27,6 +27,7 @@ export function initGcfrV2Stock({
     scanMode: "backstock",
     weightMode: "product",
     backstockEntryMode: "used",
+    activeShopfloorLayers: new Set([1]),
   };
 
   const q = (id) => $(id);
@@ -864,14 +865,62 @@ export function initGcfrV2Stock({
     return state.packages.find((row) => String(row.id) === String(state.selectedPackageId)) || null;
   }
 
+  function renderShopfloorLayers() {
+    for (let layer = 1; layer <= 3; layer += 1) {
+      const active = state.activeShopfloorLayers.has(layer);
+      const toggle = q(`stockLayer${layer}Toggle`);
+      const across = q(`stockLayer${layer}Across`);
+      const deep = q(`stockLayer${layer}Deep`);
+      const row = toggle?.closest(".stock-layer-row");
+
+      toggle?.classList.toggle("active", active);
+      toggle?.setAttribute("aria-pressed", String(active));
+      row?.classList.toggle("active", active);
+
+      if (across) across.disabled = !active;
+      if (deep) deep.disabled = !active;
+
+      if (!active) {
+        if (across) across.value = "";
+        if (deep) deep.value = "";
+        if (q(`stockLayer${layer}Total`)) {
+          q(`stockLayer${layer}Total`).textContent = "0";
+        }
+      }
+    }
+  }
+
+  function toggleShopfloorLayer(layer) {
+    if (state.activeShopfloorLayers.has(layer)) {
+      state.activeShopfloorLayers.delete(layer);
+    } else {
+      state.activeShopfloorLayers.add(layer);
+    }
+
+    renderShopfloorLayers();
+    recalc();
+
+    if (state.activeShopfloorLayers.has(layer)) {
+      q(`stockLayer${layer}Across`)?.focus();
+    }
+  }
+
   function displayCount() {
     let total = 0;
+
     for (let layer = 1; layer <= 3; layer += 1) {
-      const across = cleanInt(q(`stockLayer${layer}Across`).value);
-      const deep = cleanInt(q(`stockLayer${layer}Deep`).value);
-      total += across * deep;
-      q(`stockLayer${layer}Total`).textContent = String(across * deep);
+      const active = state.activeShopfloorLayers.has(layer);
+      const across = active ? cleanInt(q(`stockLayer${layer}Across`)?.value) : 0;
+      const deep = active ? cleanInt(q(`stockLayer${layer}Deep`)?.value) : 0;
+      const layerTotal = across > 0 && deep > 0 ? across * deep : 0;
+
+      total += layerTotal;
+      if (q(`stockLayer${layer}Total`)) {
+        q(`stockLayer${layer}Total`).textContent = String(layerTotal);
+      }
     }
+
+    // Loose quantity is the +A part of "Across × Deep + A".
     return total + cleanInt(q("stockShopfloorLooseQty")?.value);
   }
 
@@ -1735,6 +1784,8 @@ export function initGcfrV2Stock({
 
     state.manualWeights = [];
     state.backstockEntryMode = "used";
+    state.activeShopfloorLayers = new Set([1]);
+    renderShopfloorLayers();
     renderManualWeights();
 
     if (state.profile?.default_unit_weight_g) {
@@ -1862,6 +1913,11 @@ export function initGcfrV2Stock({
   });
 
   q("stockClearCalculatorBtn").onclick = clearCalculator;
+  for (let layer = 1; layer <= 3; layer += 1) {
+    q(`stockLayer${layer}Toggle`)?.addEventListener("click", () => {
+      toggleShopfloorLayer(layer);
+    });
+  }
   q("stockAddNewPackageBtn")?.addEventListener("click", addNewBackstockPackage);
   q("stockUsedSubmitBtn")?.addEventListener("click", submitBackstockUsed);
   q("stockUsedEntryInput")?.addEventListener("keydown", (event) => {
@@ -1895,6 +1951,7 @@ export function initGcfrV2Stock({
   q("stockUseProductWeight")?.addEventListener("change", syncWeightMode);
   q("stockUseManualWeight")?.addEventListener("change", syncWeightMode);
   state.scanMode = "";
+  renderShopfloorLayers();
   setScanMode("backstock");
   renderManualWeights();
 
