@@ -7476,6 +7476,11 @@ body {
 }
 
 
+/* Prevent pull-to-refresh without disabling normal page or nested scrolling. */
+html, body {
+  overscroll-behavior-y: none;
+}
+
 /* Barcode guide doubles as the manual snapshot trigger on hard-to-read labels. */
 /* Snapshot guide must sit above the camera and consume the touch. */
 .scanner-wrap .barcode-guide[role="button"] {

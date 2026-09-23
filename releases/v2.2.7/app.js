@@ -224,11 +224,13 @@ async function loadProfile(userId) {
 }
 
 async function enterApp() {
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return;
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!data.user) throw new Error("Session unavailable. Reconnect and retry.");
 
   currentUser = data.user;
   currentProfile = await loadProfile(currentUser.id);
+  $("sessionRestoreRetry")?.remove();
 
   resetAppTransientUiForAccountChange();
   draft = loadDraft(currentUser.id);
@@ -281,6 +283,10 @@ async function enterApp() {
 
   await initializeChatUnreadState();
   subscribeRealtime();
+  const savedScreen = localStorage.getItem(`gcfr_last_screen_${currentUser.id}`);
+  if (savedScreen && savedScreen !== "scan" && (savedScreen !== "admin" || isAdmin)) {
+    await navigateToScreen(savedScreen);
+  }
 }
 
 async function leaveApp() {
@@ -784,6 +790,8 @@ const moreScreens = new Set(["history", "roster", "admin", "account"]);
 async function navigateToScreen(screen) {
   const target = $(`screen-${screen}`);
   if (!target) return;
+  if (screen === "admin" && !isOwnerUser() && !limitedStockSetupEntry) return;
+  if (currentUser) localStorage.setItem(`gcfr_last_screen_${currentUser.id}`, screen);
 
   const navScreen = moreScreens.has(screen) ? "more" : screen;
 
@@ -7740,10 +7748,21 @@ async function boot() {
       await enterApp();
     } catch (error) {
       console.error(error);
-      clearSessionOnlyLoginMarker();
-      await supabase.auth.signOut();
+      // Temporary API/network errors must not revoke the remembered session.
       await leaveApp();
-      setAuthStatus("Session could not be restored. Log in again.");
+      setAuthStatus("Connection interrupted. Your login is saved; reconnect and retry.");
+      let retry = $("sessionRestoreRetry");
+      if (!retry) {
+        retry = document.createElement("button");
+        retry.id = "sessionRestoreRetry";
+        retry.type = "button";
+        retry.textContent = "Retry saved login";
+        $("loginForm").appendChild(retry);
+      }
+      retry.onclick = async () => {
+        retry.disabled = true;
+        await boot().finally(() => { retry.disabled = false; });
+      };
     }
   } else {
     authView("loginForm");
@@ -7757,5 +7776,4 @@ boot()
   .catch((error) => {
     console.error("GCFR boot failed:", error);
   });
-
 

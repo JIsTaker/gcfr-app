@@ -200,6 +200,8 @@ export function initGcfrV2Stock({
   async function loadProfileAndPackages(renderOperational = true) {
     if (!state.selectedProduct) return;
 
+    const selection = state.selectedProduct;
+    const userId = currentUser()?.id;
     const code = state.selectedProduct.code;
 
     const [
@@ -224,6 +226,7 @@ export function initGcfrV2Stock({
         .order("barcode_type", { ascending: true }),
     ]);
 
+    if (state.selectedProduct !== selection || currentUser()?.id !== userId) return;
     if (profileError) throw profileError;
     if (packageError) throw packageError;
     if (barcodeError) throw barcodeError;
@@ -240,15 +243,17 @@ export function initGcfrV2Stock({
   }
 
   async function selectProduct(product) {
+    const sameProduct = state.selectedProduct?.code === String(product.code || "").trim();
     state.selectedProduct = {
       code: String(product.code || "").trim(),
       name: String(product.name || "").trim(),
     };
+    const selection = state.selectedProduct;
     state.profile = null;
     state.packages = [];
     state.barcodeLinks = [];
     state.selectedPackageId = "";
-    state.manualWeights = [];
+    if (!sameProduct) clearCalculator();
 
     q("stockProductSearch").value = "";
     hideSearchResults();
@@ -259,6 +264,7 @@ export function initGcfrV2Stock({
 
     try {
       await loadProfileAndPackages();
+      if (state.selectedProduct !== selection) return;
 
       if (["selling", "ticket"].includes(state.pendingBarcodeMode) && state.pendingBarcode) {
         await savePendingProductBarcode();
@@ -557,6 +563,7 @@ export function initGcfrV2Stock({
         edit.onclick = () => openPackageEditor(row);
         actions.appendChild(edit);
 
+        if (currentUser()?.id === "139c07f7-a826-4513-86af-25afdbe44d8f") {
         const del = document.createElement("button");
         del.type = "button";
         del.className = "text-button danger";
@@ -582,6 +589,7 @@ export function initGcfrV2Stock({
           renderPackages();
         };
         actions.appendChild(del);
+        }
       }
 
       list.appendChild(card);
@@ -706,7 +714,8 @@ export function initGcfrV2Stock({
 
     q("stockEachCalculator").classList.toggle("hidden", !each);
     q("stockApproxCalculator").classList.toggle("hidden", each);
-    q("stockApproxDisplayWeightField").classList.toggle("hidden", each || cleanNumber(state.profile.default_unit_weight_g) > 0);
+    // Saved averages are defaults, not a substitute for today's measured weight.
+    q("stockApproxDisplayWeightField").classList.toggle("hidden", each);
 
     q("stockPackageSelect").value = state.selectedPackageId || "";
 
@@ -898,22 +907,20 @@ export function initGcfrV2Stock({
   }
 
   async function detectTicketProduct(barcode) {
-    if (!/^\d+$/.test(barcode)) return null;
+    if (!/^\d{8}$/.test(barcode)) return null;
+    const sum = [...barcode].reduce((total, digit, i) => total + Number(digit) * (i % 2 === 0 ? 3 : 1), 0);
+    if (sum % 10 !== 0) return null;
 
     const catalog = await loadCatalog();
     const matches = catalog
       .filter((product) => {
         const code = String(product.code || "").trim();
-        return /^\d{5,8}$/.test(code) && barcode.includes(code);
-      })
-      .sort((a, b) => b.code.length - a.code.length);
+        return /^\d{6,7}$/.test(code) && barcode.slice(0, 7) === code.padStart(7, "0");
+      });
 
     if (!matches.length) return null;
 
-    const bestLength = matches[0].code.length;
-    const best = matches.filter((product) => product.code.length === bestLength);
-
-    return best.length === 1 ? best[0] : null;
+    return matches.length === 1 ? matches[0] : null;
   }
 
   async function handleBarcode(rawBarcode) {

@@ -1,4 +1,4 @@
-const CORE_CACHE = "gcfr-core-v3";
+const CORE_CACHE = "gcfr-core-v4";
 const RELEASE_CACHE_PREFIX = "gcfr-release-";
 
 const scopeUrl = new URL(self.registration.scope);
@@ -41,7 +41,8 @@ async function cacheRelease(version) {
   // A public version can receive same-version patches. Rebuild that release
   // cache so v2.2.7 does not stay pinned to the first v2.2.7 files forever.
   const cacheName = `${RELEASE_CACHE_PREFIX}${version}`;
-  await caches.delete(cacheName);
+  // addAll commits atomically. Keep the last usable cache if offline or if
+  // even one asset fails, rather than deleting the user's offline release.
   const cache = await caches.open(cacheName);
   const base = `releases/${version}/`;
 
@@ -54,7 +55,7 @@ async function cacheRelease(version) {
     atScope(`${base}stock.css`),
     atScope(`${base}vendor/zxing-reader.js`),
     atScope(`${base}vendor/zxing_reader.wasm`)
-  ]);
+  ].map((url) => new Request(url, { cache: "reload" })));
 }
 
 async function warmReleaseSlots() {
@@ -131,7 +132,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (relativePath.startsWith("releases/")) {
+  if (relativePath.startsWith("releases/") || relativePath === "release-client.js") {
     event.respondWith((async () => {
       try {
         // Same-version patches must reach the device. Prefer network for
@@ -141,10 +142,15 @@ self.addEventListener("fetch", (event) => {
         if (response.ok) {
           const parts = relativePath.split("/");
           const version = parts[1];
-          const cache = await caches.open(`${RELEASE_CACHE_PREFIX}${version}`);
+          const cache = await caches.open(relativePath === "release-client.js"
+            ? CORE_CACHE : `${RELEASE_CACHE_PREFIX}${version}`);
           await cache.put(request, response.clone());
         }
 
+        if (!response.ok) {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+        }
         return response;
       } catch {
         const cached = await caches.match(request);

@@ -61,8 +61,16 @@
       }
 
       if (state.current && state.current !== THIS_RELEASE) {
-        await askWorkerToCache(state.current);
-        location.replace(rootUrl.href);
+        void askWorkerToCache(state.current);
+        if (!document.getElementById("gcfrReleaseUpdate")) {
+          const button = document.createElement("button");
+          button.id = "gcfrReleaseUpdate";
+          button.type = "button";
+          button.textContent = "Update available — reopen when ready";
+          button.style.cssText = "position:fixed;top:env(safe-area-inset-top,0px);left:8px;right:8px;z-index:10000;padding:12px;border:1px solid #cbd5cf;border-radius:12px;background:#fff;color:#173f2b";
+          button.onclick = () => location.replace(rootUrl.href);
+          document.body.appendChild(button);
+        }
       }
     } catch (error) {
       console.warn("Release check failed:", error);
@@ -85,27 +93,7 @@
     }
   }, { once: true });
 
-  // If a newly promoted current release cannot finish booting, keep the
-  // previous known-good release available on this device automatically.
-  setTimeout(async () => {
-    if (bootConfirmed || channel === "patching" || channel === "manual" || channel === "recovery") return;
-
-    try {
-      const state = releaseState || await getState();
-
-      if (THIS_RELEASE === state.current && state.previous) {
-        localStorage.setItem("gcfr_failed_release", THIS_RELEASE);
-        localStorage.setItem("gcfr_recovery_release", state.previous);
-
-        const fallback = new URL(rootUrl.href);
-        fallback.searchParams.set("release", state.previous);
-        fallback.searchParams.set("recovery", "1");
-        location.replace(fallback.href);
-      }
-    } catch (error) {
-      console.warn("Automatic client recovery check failed:", error);
-    }
-  }, 12000);
+  // Slow/offline auth and data restoration must never trigger a rollback.
 
   // Do not run release navigation checks on window focus/visibility changes.
   // Mobile browsers can emit these during pull/scroll UI transitions, which

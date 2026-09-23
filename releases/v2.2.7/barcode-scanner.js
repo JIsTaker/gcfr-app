@@ -104,6 +104,7 @@ export function createBarcodeScanner({
   let nativeFailures = 0;
   let decoder = null;
   let decoderLoadError = null;
+  let resumeOnPageShow = false;
 
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d", {
@@ -135,6 +136,8 @@ export function createBarcodeScanner({
 
   function stop() {
     ++session;
+    opening = false;
+    resumeOnPageShow = false;
     active = false;
     clearTimeout(timer);
     release(stream);
@@ -468,6 +471,9 @@ export function createBarcodeScanner({
           },
         });
       } catch (cameraError) {
+        if (id !== session) return;
+        // A denied/busy camera must not trigger a second permission request.
+        if (!["OverconstrainedError", "NotFoundError"].includes(cameraError.name)) throw cameraError;
         // Some Android devices reject exact rear-camera constraints.
         media = await navigator.mediaDevices.getUserMedia({
         audio: false,
@@ -508,6 +514,8 @@ export function createBarcodeScanner({
       if (id !== session) return;
 
       nativeDetector = await nativeDetectorTask;
+      if (id !== session) return;
+      nativeFailures = 0;
       decoder = null;
       decoderLoadError = null;
 
@@ -517,13 +525,14 @@ export function createBarcodeScanner({
           return loaded;
         })
         .catch((error) => {
-          decoderLoadError = error;
+          if (id === session) decoderLoadError = error;
           return null;
         });
 
       if (!nativeDetector) {
         status.textContent = "Loading barcode scanner…";
         await decoderTask;
+        if (id !== session) return;
 
         if (!decoder) {
           throw decoderLoadError || new Error("Barcode scanner could not load.");
@@ -789,7 +798,7 @@ export function createBarcodeScanner({
             : error,
       );
     } finally {
-      opening = false;
+      if (id === session) opening = false;
     }
   }
 
@@ -801,7 +810,25 @@ export function createBarcodeScanner({
 
   // Mobile browser/PWA chrome can transiently hide the document while the
   // user is still in the scanner. Do not destroy the camera session here.
-  window.addEventListener("pagehide", stop);
+  window.addEventListener("pagehide", () => {
+    const wasActive = active;
+    stop();
+    resumeOnPageShow = wasActive;
+  });
+  window.addEventListener("pageshow", () => {
+    if (!resumeOnPageShow) return;
+    resumeOnPageShow = false;
+    void start();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || !active || opening) return;
+    if (stream?.getVideoTracks().some((track) => track.readyState === "ended")) {
+      stop();
+      void start();
+    } else {
+      video?.play().catch(() => {});
+    }
+  });
 
   return {
     start,
