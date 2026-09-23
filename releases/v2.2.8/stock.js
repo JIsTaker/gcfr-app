@@ -949,19 +949,45 @@ export function initGcfrV2Stock({
     if (state.profile) renderCalculator();
   }
 
+  function manualSampleAverage() {
+    const values = [1, 2, 3]
+      .map((index) => cleanNumber(q(`stockSampleWeight${index}`)?.value))
+      .filter((value) => value > 0);
+
+    if (values.length !== 3) return 0;
+    return values.reduce((sum, value) => sum + value, 0) / 3;
+  }
+
+  function updateManualSampleAverage() {
+    const average = manualSampleAverage();
+    const output = q("stockSampleAverage");
+    const input = q("stockDisplayUnitWeightG");
+
+    if (output) output.textContent = average ? `${average.toFixed(1)} g` : "0 g";
+    if (state.weightMode === "manual" && input) {
+      input.value = average ? String(average) : "";
+    }
+
+    recalc();
+  }
+
   function syncWeightMode() {
     state.weightMode = q("stockUseManualWeight")?.checked ? "manual" : "product";
     const input = q("stockDisplayUnitWeightG");
     const saved = cleanNumber(state.profile?.default_unit_weight_g);
     if (!input) return;
+
+    q("stockProductWeightMode")?.classList.toggle("hidden", state.weightMode !== "product");
+    q("stockManualAveragePanel")?.classList.toggle("hidden", state.weightMode !== "manual");
+
     if (state.weightMode === "product") {
       input.value = saved ? String(saved) : "";
-      input.readOnly = true;
     } else {
-      input.readOnly = false;
-      if (saved && cleanNumber(input.value) === saved) input.value = "";
-      input.focus();
+      const average = manualSampleAverage();
+      input.value = average ? String(average) : "";
+      q("stockSampleWeight1")?.focus();
     }
+
     recalc();
   }
 
@@ -1128,7 +1154,15 @@ export function initGcfrV2Stock({
       }
       if (state.weightMode === "product" && q("stockDisplayUnitWeightG")) {
         q("stockDisplayUnitWeightG").value = defaultWeight ? String(defaultWeight) : "";
-        q("stockDisplayUnitWeightG").readOnly = true;
+      }
+      q("stockProductWeightMode")?.classList.toggle("hidden", state.weightMode !== "product");
+      q("stockManualAveragePanel")?.classList.toggle("hidden", state.weightMode !== "manual");
+      if (state.weightMode === "manual") {
+        const average = manualSampleAverage();
+        q("stockDisplayUnitWeightG").value = average ? String(average) : "";
+        if (q("stockSampleAverage")) {
+          q("stockSampleAverage").textContent = average ? `${average.toFixed(1)} g` : "0 g";
+        }
       }
     }
 
@@ -1778,6 +1812,9 @@ export function initGcfrV2Stock({
       "stockLayer3Deep",
       "stockShopfloorLooseQty",
       "stockUsedEntryInput",
+      "stockSampleWeight1",
+      "stockSampleWeight2",
+      "stockSampleWeight3",
     ].forEach((id) => {
       if (q(id)) q(id).value = "";
     });
@@ -1791,6 +1828,7 @@ export function initGcfrV2Stock({
     if (state.profile?.default_unit_weight_g) {
       q("stockDisplayUnitWeightG").value = String(state.profile.default_unit_weight_g);
     }
+    if (q("stockSampleAverage")) q("stockSampleAverage").textContent = "0 g";
 
     recalc();
   }
@@ -1950,6 +1988,9 @@ export function initGcfrV2Stock({
 
   q("stockUseProductWeight")?.addEventListener("change", syncWeightMode);
   q("stockUseManualWeight")?.addEventListener("change", syncWeightMode);
+  ["stockSampleWeight1", "stockSampleWeight2", "stockSampleWeight3"].forEach((id) => {
+    q(id)?.addEventListener("input", updateManualSampleAverage);
+  });
   state.scanMode = "";
   renderShopfloorLayers();
   setScanMode("backstock");

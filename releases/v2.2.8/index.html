@@ -499,10 +499,25 @@
               <span>Approx unit weight</span>
               <div class="stock-weight-mode">
                 <label><input id="stockUseProductWeight" name="stockWeightMode" type="radio" value="product" checked> Product weight</label>
-                <label><input id="stockUseManualWeight" name="stockWeightMode" type="radio" value="manual"> Manual</label>
+                <label><input id="stockUseManualWeight" name="stockWeightMode" type="radio" value="manual"> Manual 3-fruit average</label>
               </div>
-              <input id="stockDisplayUnitWeightG" inputmode="decimal" type="number" min="0" step="1" placeholder="Weight (g)">
-              <small id="stockProductWeightHint" class="item-sub"></small>
+
+              <div id="stockProductWeightMode">
+                <input id="stockDisplayUnitWeightG" inputmode="decimal" type="number" min="0" step="1" placeholder="Weight (g)" readonly>
+                <small id="stockProductWeightHint" class="item-sub"></small>
+              </div>
+
+              <div id="stockManualAveragePanel" class="stock-manual-average hidden">
+                <div class="stock-manual-average-inputs">
+                  <label>Fruit 1 (g)<input id="stockSampleWeight1" inputmode="decimal" type="number" min="0" step="1" placeholder="g"></label>
+                  <label>Fruit 2 (g)<input id="stockSampleWeight2" inputmode="decimal" type="number" min="0" step="1" placeholder="g"></label>
+                  <label>Fruit 3 (g)<input id="stockSampleWeight3" inputmode="decimal" type="number" min="0" step="1" placeholder="g"></label>
+                </div>
+                <div class="stock-manual-average-result">
+                  <span>Average</span>
+                  <strong id="stockSampleAverage">0 g</strong>
+                </div>
+              </div>
             </div>
           </div>
 
