@@ -583,9 +583,9 @@ export function createBarcodeScanner({
             && preview.videoWidth
             && preview.videoHeight
           ) {
-            // Keep Android autofocus awake while the user moves between shelf
-            // labels and distances. Some devices settle once and stop hunting.
-            await applyScanFocus();
+            // Leave focus alone after camera startup. Re-applying focus from
+            // every scan iteration makes some Android cameras hunt continuously,
+            // blurring narrow thermal-barcode gaps between decode attempts.
             // Android Chrome/PWA can use the native detector directly
             // from the live video frame. This is much lighter than decoding a
             // large ImageData buffer through WASM on every pass.
