@@ -103,9 +103,6 @@ export function createBarcodeScanner({
   let nativeDetector = null;
   let nativeFailures = 0;
   let decoder = null;
-  let lastCandidate = "";
-  let candidateHits = 0;
-  let candidateAt = 0;
   let decoderLoadError = null;
 
   const canvas = document.createElement("canvas");
@@ -384,9 +381,6 @@ export function createBarcodeScanner({
       nativeDetector = await nativeDetectorTask;
       decoder = null;
       decoderLoadError = null;
-      lastCandidate = "";
-      candidateHits = 0;
-      candidateAt = 0;
 
       const decoderTask = loadDecoder()
         .then((loaded) => {
@@ -501,7 +495,10 @@ export function createBarcodeScanner({
             if (!foundText && decoder) {
               // Rotate full / wide / tight crops.
               // Android uses smaller buffers so the scan loop stays responsive.
-              const profile = frames++ % (isAndroid ? 5 : 3);
+              const androidProfileOrder = [1, 2, 4, 1, 3, 2, 4, 0];
+              const profile = isAndroid
+                ? androidProfileOrder[frames++ % androidProfileOrder.length]
+                : frames++ % 3;
 
               const results = await decoder.readBarcodes(
                 capture(preview, profile),
@@ -524,39 +521,18 @@ export function createBarcodeScanner({
             failures = 0;
 
             if (foundText) {
-              const normalized = foundText.trim();
-              const now = Date.now();
+              processing = true;
+              stop();
 
-              // Require the same decode twice in a short window. A single
-              // blurry frame can otherwise produce a plausible but wrong
-              // Code128/ITF value and close the scanner immediately.
-              if (normalized === lastCandidate && now - candidateAt <= 1200) {
-                candidateHits += 1;
-              } else {
-                lastCandidate = normalized;
-                candidateHits = 1;
-              }
-              candidateAt = now;
-
-              if (candidateHits >= 2) {
-                processing = true;
-                stop();
-
-                try {
-                  await onResult(normalized);
-                } catch (error) {
-                  onError(error);
-                } finally {
-                  processing = false;
-                }
-
-                return;
+              try {
+                await onResult(foundText.trim());
+              } catch (error) {
+                onError(error);
+              } finally {
+                processing = false;
               }
 
-              status.textContent = "Barcode found. Hold steady…";
-            } else if (Date.now() - candidateAt > 1200) {
-              lastCandidate = "";
-              candidateHits = 0;
+              return;
             }
 
             if (Date.now() - started > 5500) {
@@ -592,7 +568,7 @@ export function createBarcodeScanner({
         }
 
         if (id === session && active) {
-          timer = setTimeout(scanFrame, isAndroid ? 75 : 90);
+          timer = setTimeout(scanFrame, isAndroid ? 45 : 70);
         }
       }
 
