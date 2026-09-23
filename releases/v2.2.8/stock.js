@@ -295,73 +295,9 @@ export function initGcfrV2Stock({
     q("stockCalculator")?.classList.add("hidden");
   }
 
-  function renderSavedStockData() {
-    const box = q("stockSavedData");
-    if (!box || !state.selectedProduct) return;
-
-    const profileType = state.profile?.stock_type === "approx"
-      ? "Approx"
-      : state.profile?.stock_type === "each"
-        ? "Each"
-        : "Not set";
-    const weight = cleanNumber(state.profile?.default_unit_weight_g);
-    const packageRows = state.packages || [];
-    const barcodeRows = [...(state.barcodeLinks || [])];
-
-    for (const pack of packageRows) {
-      const barcode = String(pack.factory_barcode || "").trim();
-      if (barcode && !barcodeRows.some((row) => String(row.barcode || "").trim() === barcode)) {
-        barcodeRows.push({ barcode, barcode_type: "factory_barcode" });
-      }
-    }
-
-    const packageHtml = packageRows.length
-      ? packageRows.map((row) => `
-          <div class="stock-data-row">
-            <span>${escapeHtml(packageTitle(row))}</span>
-            <strong>${escapeHtml(packageDetail(row))}</strong>
-          </div>
-        `).join("")
-      : '<div class="stock-data-empty">No package data saved.</div>';
-
-    const labels = {
-      product_code: "Selling",
-      ticket_barcode: "Ticket",
-      factory_barcode: "Factory",
-    };
-
-    const barcodeHtml = barcodeRows.length
-      ? barcodeRows.map((row) => `
-          <div class="stock-data-code">
-            <span>${escapeHtml(labels[row.barcode_type] || "Code")}</span>
-            <strong>${escapeHtml(String(row.barcode || ""))}</strong>
-          </div>
-        `).join("")
-      : '<div class="stock-data-empty">No barcode data saved.</div>';
-
-    box.innerHTML = `
-      <div class="stock-data-head">
-        <strong>Saved stock data</strong>
-      </div>
-      <div class="stock-data-grid">
-        <div><span>Type</span><strong>${profileType}</strong></div>
-        <div><span>Product weight</span><strong>${weight ? `${weight} g` : "—"}</strong></div>
-      </div>
-      <div class="stock-data-section">
-        <span class="stock-data-label">Package data</span>
-        ${packageHtml}
-      </div>
-      <div class="stock-data-section">
-        <span class="stock-data-label">Linked codes</span>
-        <div class="stock-data-codes">${barcodeHtml}</div>
-      </div>
-    `;
-  }
-
   function renderSelectedProduct() {
     if (!state.selectedProduct) return;
 
-    renderSavedStockData();
     const status = q("stockOperationalStatus");
 
     if (!state.profile) {
