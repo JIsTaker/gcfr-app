@@ -672,13 +672,14 @@ export function createBarcodeScanner({
       let softCandidateHits = 0;
       let ocrRunning = false;
       let lastOcrAt = 0;
+      const ocrCandidateCounts = Object.create(null);
       const started = Date.now();
 
       async function tryTicketTextRecognition() {
         if (!onTextCandidates || ocrRunning || id !== session || !active) return;
 
         const now = Date.now();
-        if (now - started < 1500 || now - lastOcrAt < 3200) return;
+        if (now - started < 900 || now - lastOcrAt < 1800) return;
         lastOcrAt = now;
         ocrRunning = true;
 
@@ -687,13 +688,13 @@ export function createBarcodeScanner({
           const height = video.videoHeight;
           if (!width || !height) return;
 
-          const maxWidth = 1200;
+          const maxWidth = 1400;
           const scale = Math.min(1, maxWidth / width);
           ocrCanvas.width = Math.max(1, Math.round(width * scale));
           ocrCanvas.height = Math.max(1, Math.round(height * scale));
 
           ocrContext.save();
-          ocrContext.filter = "grayscale(1) contrast(1.65)";
+          ocrContext.filter = "grayscale(1) contrast(1.8)";
           ocrContext.drawImage(video, 0, 0, ocrCanvas.width, ocrCanvas.height);
           ocrContext.restore();
 
@@ -703,23 +704,42 @@ export function createBarcodeScanner({
           const worker = await (ocrWarmTask || loadOcrWorker());
           if (id !== session || !active) return;
 
-          const texts = [];
+          const recordCandidates = async (text) => {
+            const candidates = extractTicketNumberCandidates(text);
+            if (!candidates.length) return "";
+
+            for (const value of new Set(candidates)) {
+              ocrCandidateCounts[value] = (ocrCandidateCounts[value] || 0) + 1;
+            }
+
+            const accepted = await onTextCandidates(candidates, {
+              counts: { ...ocrCandidateCounts },
+            });
+            if (id !== session || !active) return "";
+
+            const acceptedValue =
+              accepted && typeof accepted === "object"
+                ? accepted.value
+                : accepted;
+
+            return String(acceptedValue || "").trim();
+          };
+
           const full = await worker.recognize(ocrCanvas);
-          texts.push(full?.data?.text || "");
           if (id !== session || !active) return;
 
-          // Ticket layouts vary. If the whole-frame pass misses the printed
-          // code, scan overlapping horizontal bands so a 6-8 digit code can
-          // be found above, below or beside the barcode.
-          const bands = [
-            { top: 0.00, height: 0.48 },
-            { top: 0.26, height: 0.48 },
-            { top: 0.52, height: 0.48 },
-          ];
+          let acceptedText = await recordCandidates(full?.data?.text || "");
 
-          let candidates = extractTicketNumberCandidates(texts.join("\n"));
+          // Ticket layouts vary, so verify the number in overlapping bands.
+          // Matching the same digits in two independent OCR passes greatly
+          // reduces single-digit substitutions on damaged labels.
+          if (!acceptedText) {
+            const bands = [
+              { top: 0.00, height: 0.48 },
+              { top: 0.26, height: 0.48 },
+              { top: 0.52, height: 0.48 },
+            ];
 
-          if (!candidates.length) {
             for (const band of bands) {
               const top = Math.round(ocrCanvas.height * band.top);
               const heightPx = Math.min(
@@ -736,22 +756,13 @@ export function createBarcodeScanner({
                   height: heightPx,
                 },
               });
-              texts.push(bandResult?.data?.text || "");
-              candidates = extractTicketNumberCandidates(texts.join("\n"));
-              if (candidates.length) break;
               if (id !== session || !active) return;
+
+              acceptedText = await recordCandidates(bandResult?.data?.text || "");
+              if (acceptedText) break;
             }
           }
 
-          if (!candidates.length) {
-            status.textContent = previousStatus;
-            return;
-          }
-
-          const accepted = await onTextCandidates(candidates);
-          if (id !== session || !active) return;
-
-          const acceptedText = String(accepted || "").trim();
           if (!acceptedText) {
             status.textContent = previousStatus;
             return;
