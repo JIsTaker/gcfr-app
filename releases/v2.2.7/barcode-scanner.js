@@ -154,7 +154,7 @@ export function createBarcodeScanner({
 
   const isAndroid = /Android/i.test(navigator.userAgent);
 
-  function capture(source, profile, rotationDeg = 0) {
+  function capture(source, profile, perspective = 0) {
     const width = source.videoWidth;
     const height = source.videoHeight;
 
@@ -266,19 +266,53 @@ export function createBarcodeScanner({
     context.imageSmoothingEnabled = false;
 
     context.save();
-    context.translate(canvas.width / 2, canvas.height / 2);
-    context.rotate((rotationDeg * Math.PI) / 180);
-    context.drawImage(
-      source,
-      (width - sw) / 2,
-      (height - sh) / 2,
-      sw,
-      sh,
-      -canvas.width / 2,
-      -canvas.height / 2,
-      canvas.width,
-      canvas.height,
-    );
+
+    if (!perspective) {
+      context.drawImage(
+        source,
+        (width - sw) / 2,
+        (height - sh) / 2,
+        sw,
+        sh,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+    } else {
+      // Approximate the user's successful tilted-ticket view in software.
+      // Split the crop into narrow columns and vertically compress/offset them
+      // progressively. This creates a mild perspective/skew pass while keeping
+      // barcode bars sharp.
+      const slices = 48;
+      const srcX = (width - sw) / 2;
+      const srcY = (height - sh) / 2;
+
+      for (let i = 0; i < slices; i += 1) {
+        const t = i / Math.max(1, slices - 1);
+        const sx = srcX + (sw * i) / slices;
+        const sWidth = sw / slices + 1;
+        const dx = (canvas.width * i) / slices;
+        const dWidth = canvas.width / slices + 1;
+        const edge = perspective > 0 ? t : 1 - t;
+        const compression = 1 - Math.abs(perspective) * edge;
+        const dHeight = canvas.height * compression;
+        const dy = (canvas.height - dHeight) / 2;
+
+        context.drawImage(
+          source,
+          sx,
+          srcY,
+          sWidth,
+          sh,
+          dx,
+          dy,
+          dWidth,
+          dHeight,
+        );
+      }
+    }
+
     context.restore();
 
     return context.getImageData(
@@ -500,22 +534,22 @@ export function createBarcodeScanner({
               // Rotate full / wide / tight crops.
               // Android uses smaller buffers so the scan loop stays responsive.
               const androidPasses = [
-                { profile: 1, angle: 0 },
-                { profile: 2, angle: 0 },
-                { profile: 4, angle: 0 },
-                { profile: 2, angle: -4 },
-                { profile: 2, angle: 4 },
-                { profile: 4, angle: -4 },
-                { profile: 4, angle: 4 },
-                { profile: 3, angle: 0 },
-                { profile: 0, angle: 0 },
+                { profile: 2, perspective: 0 },
+                { profile: 4, perspective: 0 },
+                { profile: 2, perspective: 0.18 },
+                { profile: 2, perspective: -0.18 },
+                { profile: 4, perspective: 0.18 },
+                { profile: 4, perspective: -0.18 },
+                { profile: 1, perspective: 0 },
+                { profile: 3, perspective: 0 },
+                { profile: 0, perspective: 0 },
               ];
               const pass = isAndroid
                 ? androidPasses[frames++ % androidPasses.length]
-                : { profile: frames++ % 3, angle: 0 };
+                : { profile: frames++ % 3, perspective: 0 };
 
               const results = await decoder.readBarcodes(
-                capture(preview, pass.profile, pass.angle),
+                capture(preview, pass.profile, pass.perspective),
                 options,
               );
 
