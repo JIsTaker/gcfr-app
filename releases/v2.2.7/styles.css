@@ -7501,3 +7501,26 @@ body {
   color: inherit;
   font: inherit;
 }
+
+.scanner-wrap .barcode-snapshot-btn {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  bottom: max(88px, calc(env(safe-area-inset-bottom) + 72px));
+  transform: translateX(-50%);
+  width: auto;
+  min-width: 132px;
+  min-height: 48px;
+  padding: 11px 20px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .72);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  touch-action: manipulation;
+}
+.scanner-wrap .barcode-snapshot-btn:disabled {
+  opacity: .78;
+}

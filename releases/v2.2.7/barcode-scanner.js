@@ -566,7 +566,7 @@ export function createBarcodeScanner({
       if (id !== session) return;
 
       status.textContent =
-        "Fill the guide with the barcode. Tap the guide for a focused snapshot.";
+        "Fill the guide with the barcode. Use SNAPSHOT if live scan cannot read it.";
 
       let snapshotBusy = false;
 
@@ -581,6 +581,11 @@ export function createBarcodeScanner({
       async function decodeSnapshot() {
         if (snapshotBusy || processing || id !== session || !active) return;
         snapshotBusy = true;
+        const snapshotButton = overlay.querySelector(".barcode-snapshot-btn");
+        if (snapshotButton) {
+          snapshotButton.disabled = true;
+          snapshotButton.textContent = "FOCUSING…";
+        }
         status.textContent = "Focusing for snapshot…";
 
         try {
@@ -645,6 +650,11 @@ export function createBarcodeScanner({
           }
         } finally {
           snapshotBusy = false;
+          const snapshotButton = overlay.querySelector(".barcode-snapshot-btn");
+          if (snapshotButton && id === session && active) {
+            snapshotButton.disabled = false;
+            snapshotButton.textContent = "SNAPSHOT";
+          }
           // Restore continuous AF once, after the deliberate snapshot attempt.
           if (
             id === session &&
@@ -662,19 +672,12 @@ export function createBarcodeScanner({
         }
       }
 
-      const guide = overlay.querySelector(".barcode-guide");
-      if (guide) {
-        guide.setAttribute("aria-label", "Tap to focus and scan snapshot");
-        guide.onclick = (event) => {
+      const snapshotButton = overlay.querySelector(".barcode-snapshot-btn");
+      if (snapshotButton) {
+        snapshotButton.onclick = (event) => {
           event.preventDefault();
           event.stopPropagation();
           decodeSnapshot();
-        };
-        guide.onkeydown = (event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            decodeSnapshot();
-          }
         };
       }
 
