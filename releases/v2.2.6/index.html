@@ -831,6 +831,14 @@
               <span class="admin-menu-arrow" aria-hidden="true">›</span>
             </button>
 
+            <button id="openPricingManagerBtn" class="admin-menu-item" type="button">
+              <span class="admin-menu-copy">
+                <strong>Price / Promotion</strong>
+                <small>Manage manual unit prices and store-specific manual promotions.</small>
+              </span>
+              <span class="admin-menu-arrow" aria-hidden="true">›</span>
+            </button>
+
             <button id="openProcessPendingBtn" class="admin-menu-item" type="button">
               <span class="admin-menu-copy">
                 <strong>Process Pending</strong>
@@ -1001,14 +1009,32 @@
             </div>
 
             <div class="stock-unknown-actions">
-              <button id="adminStockUnknownSellingBtn" class="secondary" type="button">Selling / Product Code</button>
+              <button id="adminStockUnknownSellingBtn" class="secondary" type="button">Selling Barcode</button>
+              <button id="adminStockUnknownTicketBtn" class="secondary" type="button">Store Ticket</button>
               <button id="adminStockUnknownFactoryBtn" class="secondary" type="button">Factory Code</button>
             </div>
 
             <div id="adminStockManualRegisterPanel" class="stock-register-panel hidden">
               <div class="stock-register-copy">
+                <strong>Link to an existing product</strong>
+                <span>Search here and select the product for this scanned barcode.</span>
+              </div>
+
+              <div class="product-search-block">
+                <label class="search-label" for="adminStockLinkSearch">Find existing product</label>
+                <input
+                  id="adminStockLinkSearch"
+                  class="search-input"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="Search product name or Product Code"
+                >
+                <div id="adminStockLinkSearchResults" class="stock-search-results hidden"></div>
+              </div>
+
+              <div class="stock-register-copy">
                 <strong>Product not in database?</strong>
-                <span>Search above to link an existing product, or register a new one below.</span>
+                <span>Register a new product below.</span>
               </div>
 
               <form id="adminStockManualRegisterForm" class="stock-manual-register">
@@ -1119,6 +1145,127 @@
                 </div>
               </form>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminPricingView" class="hidden">
+        <div class="card">
+          <div class="admin-detail-head">
+            <button id="adminPricingBackBtn" class="secondary admin-back-btn" type="button">‹ Back</button>
+            <div>
+              <h2>Price / Promotion</h2>
+              <p class="muted">Manual values are used only when automatic store pricing is unavailable.</p>
+            </div>
+          </div>
+
+          <div class="admin-pricing-store-grid">
+            <label>
+              <span>Store ID</span>
+              <input id="adminPricingStoreId" autocomplete="off" value="0838" placeholder="e.g. 0838">
+            </label>
+            <label>
+              <span>Store / Region</span>
+              <input id="adminPricingStoreName" autocomplete="off" value="Coles Griffith" placeholder="Store or region name">
+            </label>
+          </div>
+
+          <div class="product-search-block">
+            <label class="search-label" for="adminPricingSearch">Find product</label>
+            <input
+              id="adminPricingSearch"
+              class="search-input"
+              type="search"
+              autocomplete="off"
+              placeholder="Search product name or Product Code"
+            >
+            <div id="adminPricingSearchResults" class="stock-search-results hidden"></div>
+          </div>
+        </div>
+
+        <div id="adminPricingSelected" class="hidden">
+          <div class="card">
+            <div class="stock-product-head">
+              <div>
+                <h2 id="adminPricingSelectedName" class="stock-product-name">-</h2>
+                <div class="stock-product-code">Product Code <strong id="adminPricingSelectedCode">-</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-pricing-grid">
+            <form id="adminManualPriceForm" class="card admin-pricing-card">
+              <div class="admin-pricing-card-head">
+                <div>
+                  <h3>Manual Unit Price</h3>
+                  <p class="muted">Fallback only. Automatic price data takes priority when it becomes available.</p>
+                </div>
+                <span id="adminManualPriceStatus" class="price-source-pill">NOT SET</span>
+              </div>
+
+              <label>
+                <span>Price</span>
+                <input id="adminManualPriceValue" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required>
+              </label>
+
+              <label>
+                <span>Price basis</span>
+                <select id="adminManualPriceBasis">
+                  <option value="per_kg">Per 1kg</option>
+                  <option value="each">Per each</option>
+                </select>
+              </label>
+
+              <div class="admin-pricing-actions">
+                <button id="adminManualPriceDeleteBtn" class="secondary" type="button">Clear Manual</button>
+                <button class="primary" type="submit">Save Manual Price</button>
+              </div>
+            </form>
+
+            <form id="adminManualPromoForm" class="card admin-pricing-card">
+              <div class="admin-pricing-card-head">
+                <div>
+                  <h3>Manual Promotion</h3>
+                  <p class="muted">Promotions are stored separately for each Store ID / region.</p>
+                </div>
+                <span id="adminManualPromoStatus" class="price-source-pill">NOT SET</span>
+              </div>
+
+              <div class="admin-pricing-two-col">
+                <label>
+                  <span>Regular price</span>
+                  <input id="adminManualPromoRegular" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Optional">
+                </label>
+                <label>
+                  <span>Promotion price</span>
+                  <input id="adminManualPromoPrice" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required>
+                </label>
+              </div>
+
+              <label>
+                <span>Price basis</span>
+                <select id="adminManualPromoBasis">
+                  <option value="each">Per each</option>
+                  <option value="per_kg">Per 1kg</option>
+                </select>
+              </label>
+
+              <div class="admin-pricing-two-col">
+                <label>
+                  <span>Starts</span>
+                  <input id="adminManualPromoStart" type="date" required>
+                </label>
+                <label>
+                  <span>Ends</span>
+                  <input id="adminManualPromoEnd" type="date" required>
+                </label>
+              </div>
+
+              <div class="admin-pricing-actions">
+                <button id="adminManualPromoOutBtn" class="secondary" type="button">Mark OUT</button>
+                <button class="primary" type="submit">Save Promotion</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

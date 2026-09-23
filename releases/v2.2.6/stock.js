@@ -248,8 +248,8 @@ export function initGcfrV2Stock({
     try {
       await loadProfileAndPackages();
 
-      if (state.pendingBarcodeMode === "selling" && state.pendingBarcode) {
-        await savePendingSellingBarcode();
+      if (["selling", "ticket"].includes(state.pendingBarcodeMode) && state.pendingBarcode) {
+        await savePendingProductBarcode();
       } else if (state.pendingBarcodeMode === "factory" && state.pendingBarcode) {
         if (!state.profile) {
           openProfileSetup();
@@ -347,16 +347,30 @@ export function initGcfrV2Stock({
     openProfileSetup(false);
     renderPackages();
 
-    if (state.pendingBarcodeMode === "selling" && state.pendingBarcode) {
-      await savePendingSellingBarcode();
+    if (["selling", "ticket"].includes(state.pendingBarcodeMode) && state.pendingBarcode) {
+      await savePendingProductBarcode();
       q("adminStockScanUnknownPanel")?.classList.add("hidden");
     } else if (state.pendingBarcodeMode === "factory" && state.pendingBarcode) {
+      // Persist the scanned Factory Code -> product relationship immediately.
+      // Package details can still be completed afterwards.
+      const barcode = state.pendingBarcode;
+      const { error: linkError } = await supabase.rpc("gcfr_link_stock_barcode", {
+        _barcode: barcode,
+        _product_code: state.selectedProduct.code,
+        _barcode_type: "factory_barcode",
+      });
+
+      if (linkError) {
+        showToast(linkError.message);
+        return;
+      }
+
       if (state.profile) {
-        openPackageEditor({ factory_barcode: state.pendingBarcode });
+        openPackageEditor({ factory_barcode: barcode });
       } else {
         q("adminStockScanUnknownMessage") &&
           (q("adminStockScanUnknownMessage").textContent =
-            "Save the product as 1 Each or Approx, then the Factory Code package editor will open.");
+            "Factory Code linked. Save the product as 1 Each or Approx, then the package editor will open.");
       }
     }
   }
@@ -946,7 +960,7 @@ export function initGcfrV2Stock({
 
     state.pendingBarcodeMode = mode;
 
-    if (mode === "selling") {
+    if (mode === "selling" || mode === "ticket") {
       if (source === "stock") {
         q("stockUnknownRegisterPanel")?.classList.remove("hidden");
         q("stockUnknownMessage").textContent =
@@ -955,7 +969,9 @@ export function initGcfrV2Stock({
       } else {
         q("adminStockManualRegisterPanel")?.classList.remove("hidden");
         q("adminStockScanUnknownMessage").textContent =
-          "Search the product above to link this barcode, or register a new product below.";
+          mode === "ticket"
+            ? "Store Ticket selected. Search the product to link this ticket barcode."
+            : "Selling Barcode selected. Search the product to link this selling barcode.";
         q("adminStockSearch")?.focus();
       }
       return;
@@ -1060,20 +1076,21 @@ export function initGcfrV2Stock({
     }
   }
 
-  async function savePendingSellingBarcode() {
+  async function savePendingProductBarcode() {
     if (
-      state.pendingBarcodeMode !== "selling"
+      !["selling", "ticket"].includes(state.pendingBarcodeMode)
       || !state.pendingBarcode
       || !state.selectedProduct
       || !canManage()
     ) return;
 
     const barcode = state.pendingBarcode;
+    const isTicket = state.pendingBarcodeMode === "ticket";
 
     const { error } = await supabase.rpc("gcfr_link_stock_barcode", {
       _barcode: barcode,
       _product_code: state.selectedProduct.code,
-      _barcode_type: "product_code",
+      _barcode_type: isTicket ? "ticket_barcode" : "product_code",
     });
 
     if (error) {
@@ -1083,7 +1100,7 @@ export function initGcfrV2Stock({
 
     const name = state.selectedProduct.name;
     closeUnknownBarcode();
-    showToast(`Selling / Product Code linked to ${name}.`);
+    showToast(`${isTicket ? "Store Ticket" : "Selling Barcode"} linked to ${name}.`);
   }
 
   function getAdminStockScanner() {
@@ -1308,6 +1325,7 @@ export function initGcfrV2Stock({
   q("adminStockScanBtn")?.addEventListener("click", startAdminStockScanner);
   q("adminStockStopScannerBtn")?.addEventListener("click", stopAdminStockScanner);
   q("adminStockUnknownSellingBtn")?.addEventListener("click", () => chooseUnknownType("selling", "admin"));
+  q("adminStockUnknownTicketBtn")?.addEventListener("click", () => chooseUnknownType("ticket", "admin"));
   q("adminStockUnknownFactoryBtn")?.addEventListener("click", () => chooseUnknownType("factory", "admin"));
   q("adminStockScanUnknownCloseBtn")?.addEventListener("click", closeUnknownBarcode);
   q("adminStockManualRegisterForm")?.addEventListener("submit", async (event) => {

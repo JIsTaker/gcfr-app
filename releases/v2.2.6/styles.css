@@ -7367,3 +7367,110 @@ body {
     font-size: 10px;
   }
 }
+
+
+/* ============================================================
+   V2.2.6 — Admin manual pricing / regional promotions
+   ============================================================ */
+
+.admin-pricing-store-grid,
+.admin-pricing-two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-pricing-store-grid {
+  margin: 14px 0;
+}
+
+.admin-pricing-store-grid label,
+.admin-pricing-card label {
+  display: grid;
+  gap: 6px;
+  color: #526259;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-pricing-card {
+  margin: 0;
+  align-content: start;
+}
+
+.admin-pricing-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-pricing-card-head h3 {
+  margin: 0 0 3px;
+}
+
+.price-source-pill,
+.lookup-price-source {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 20px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #edf3ef;
+  color: #637269;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.price-source-pill.manual,
+.lookup-price-source.manual {
+  background: #fff2d9;
+  color: #8b5a00;
+}
+
+.price-source-pill.auto,
+.lookup-price-source.auto {
+  background: #e5f5e9;
+  color: #267548;
+}
+
+.price-source-pill.out {
+  background: #f1f1f1;
+  color: #777;
+}
+
+.admin-pricing-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.lookup-price-source {
+  margin-top: 6px;
+  font-size: 8.5px;
+}
+
+@media (max-width: 720px) {
+  .admin-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-pricing-store-grid,
+  .admin-pricing-two-col,
+  .admin-pricing-actions {
+    grid-template-columns: 1fr;
+  }
+}

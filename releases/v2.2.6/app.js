@@ -8,7 +8,7 @@ const AUTH_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/gcfr-auth`;
 const ADMIN_USER_ID = "139c07f7-a826-4513-86af-25afdbe44d8f";
 
 const STOCK_RUNNER_USERS = new Map([
-  ["66c1a188-6958-4e7d-a0ba-2bfef6f6c2a2", "Troy J"],
+  ["7059cdf3-6c20-40d7-98d6-99d8401cceaf", "Troy J"],
   ["c2074c9e-492a-4913-8725-771306d1c918", "Alex S"],
 ]);
 
@@ -65,6 +65,9 @@ let limitedStockSetupEntry = false;
 
 let productSearchCatalog = null;
 let productSearchCatalogPromise = null;
+
+let adminPricingSelectedProduct = null;
+let adminPricingSearchTimer = null;
 
 let productCodeLookupTimer = null;
 let productCodeLookupRequestId = 0;
@@ -259,7 +262,10 @@ async function enterApp() {
   const canManageProducts = canManageProductData();
 
   $("adminNavBtn").classList.toggle("hidden", !isAdmin);
-  $("managerProductAddTools").classList.toggle("hidden", !canManageProducts);
+
+  // Building a Run List is available to every authenticated user.
+  // Product/barcode registration inside this area remains permission-gated.
+  $("managerProductAddTools").classList.remove("hidden");
 
   renderDraft();
   syncHistoryDateControls();
@@ -568,7 +574,10 @@ function resetAppTransientUiForAccountChange() {
   if ($("adminBarcodeDetailView")) $("adminBarcodeDetailView").classList.add("hidden");
   if ($("adminProcessPendingView")) $("adminProcessPendingView").classList.add("hidden");
   if ($("adminStockSetupView")) $("adminStockSetupView").classList.add("hidden");
+  if ($("adminPricingView")) $("adminPricingView").classList.add("hidden");
+  if ($("adminPricingSelected")) $("adminPricingSelected").classList.add("hidden");
   limitedStockSetupEntry = false;
+  adminPricingSelectedProduct = null;
 
   const emptyState = `<div class="empty-state">Loading...</div>`;
 
@@ -2370,6 +2379,7 @@ async function loadProductLookupPrice(row) {
           action: "lookup",
           productCode: row.code || "",
           productName: row.name || "",
+          storeId: "0838",
         },
       },
     );
@@ -2378,83 +2388,132 @@ async function loadProductLookupPrice(row) {
       panel.innerHTML = `
         <div class="lookup-price-unavailable">
           <strong>Griffith price unavailable</strong>
-          <span>Live Coles pricing could not be loaded.</span>
+          <span>No automatic or manual price is currently available.</span>
         </div>
       `;
       return;
     }
 
     const product = data.product;
-    const now = Number(product.price_now);
-    const was = Number(product.price_was);
-    const approxPerKg = isApproxPriceProduct(row, product);
-    const comparablePerKg = approxPerKg
+
+    const toMoneyNumber = (value) => {
+      const amount = Number(value);
+      return Number.isFinite(amount) && amount > 0 ? amount : null;
+    };
+
+    const autoNow = toMoneyNumber(product.price_now);
+    const autoWas = toMoneyNumber(product.price_was);
+    const manualPrice = toMoneyNumber(product.manual_price);
+    const manualPriceBasis = String(product.manual_price_basis || "").trim();
+    const approxProduct = isApproxPriceProduct(row, product);
+    const autoComparablePerKg = approxProduct
       ? parsePerKgPrice(product.comparable)
       : null;
 
-    // Coles approx. produce returns pricing.now / pricing.was as the
-    // estimated item price (e.g. approx. 170g), while comparable is the
-    // actual web shelf price per 1kg.
-    const displayNow = approxPerKg
-      ? comparablePerKg
-      : now;
+    let displayBasis = approxProduct ? "per_kg" : "each";
+    let displayNow = null;
+    let displayWas = null;
+    let priceSource = "AUTO";
 
-    let displayWas = was;
+    if (approxProduct) {
+      if (autoComparablePerKg !== null) {
+        displayNow = autoComparablePerKg;
 
-    if (
-      approxPerKg
-      && comparablePerKg !== null
-      && Number.isFinite(now)
-      && now > 0
-      && Number.isFinite(was)
-      && was > now
-    ) {
-      // Convert the estimated previous item price back to its previous
-      // per-kilogram shelf price using the same approximate item weight.
-      displayWas = Number(
-        (comparablePerKg * (was / now)).toFixed(2),
+        if (
+          autoWas !== null
+          && autoNow !== null
+          && autoNow > 0
+          && autoWas > autoNow
+        ) {
+          displayWas = Number(
+            (autoComparablePerKg * (autoWas / autoNow)).toFixed(2),
+          );
+        }
+      } else if (manualPrice !== null && manualPriceBasis === "per_kg") {
+        displayNow = manualPrice;
+        priceSource = "MANUAL";
+      }
+    } else if (autoNow !== null) {
+      displayNow = autoNow;
+      displayWas = autoWas;
+    } else if (manualPrice !== null) {
+      displayNow = manualPrice;
+      displayBasis = manualPriceBasis === "per_kg" ? "per_kg" : "each";
+      priceSource = "MANUAL";
+    }
+
+    const baseDisplayNow = displayNow;
+    const manualPromo = product.manual_promo || null;
+    const manualPromoActive =
+      product.promo_source === "MANUAL"
+      && manualPromo
+      && toMoneyNumber(manualPromo.promo_price) !== null;
+
+    let promo = false;
+    let promoText = "";
+
+    if (manualPromoActive) {
+      promo = true;
+      displayNow = toMoneyNumber(manualPromo.promo_price);
+      displayWas = toMoneyNumber(manualPromo.regular_price) ?? baseDisplayNow;
+      displayBasis = manualPromo.price_basis === "per_kg" ? "per_kg" : "each";
+      priceSource = "MANUAL";
+      promoText = `Manual promotion · ${manualPromo.starts_on} to ${manualPromo.ends_on}`;
+    } else {
+      const hasNow = Number.isFinite(displayNow);
+      const hasWas = Number.isFinite(displayWas) && displayWas > 0;
+
+      promo = Boolean(
+        product.promo_source === "AUTO"
+        || product.is_promo
+        || (hasNow && hasWas && displayWas > displayNow)
       );
+
+      promoText =
+        product.save_statement
+        || (product.promotion && product.promotion !== "EVERYDAY"
+          ? product.promotion
+          : "");
     }
 
     const hasNow = Number.isFinite(displayNow);
     const hasWas = Number.isFinite(displayWas) && displayWas > 0;
-    const promo = Boolean(
-      product.is_promo
-      || (hasNow && hasWas && displayWas > displayNow)
-    );
+    const perKg = displayBasis === "per_kg";
 
     const priceHtml = promo && hasNow && hasWas && displayWas > displayNow
       ? `
-          <span class="lookup-price-original">${formatLookupPrice(displayWas, { perKg: approxPerKg })}</span>
-          <strong class="lookup-price-current promo">${formatLookupPrice(displayNow, { perKg: approxPerKg })}</strong>
+          <span class="lookup-price-original">${formatLookupPrice(displayWas, { perKg })}</span>
+          <strong class="lookup-price-current promo">${formatLookupPrice(displayNow, { perKg })}</strong>
         `
       : `
           <strong class="lookup-price-current">${hasNow
-            ? formatLookupPrice(displayNow, { perKg: approxPerKg })
+            ? formatLookupPrice(displayNow, { perKg })
             : "Price unavailable"}</strong>
         `;
 
-    const promoText =
-      product.save_statement
-      || (product.promotion && product.promotion !== "EVERYDAY"
-        ? product.promotion
-        : "");
-
-    const unitText = approxPerKg
-      ? "Approx. product · price per 1kg"
+    const unitText = perKg
+      ? (approxProduct
+        ? "Approx. product · price per 1kg"
+        : "Price per 1kg")
       : String(product.comparable || "").trim();
 
     const estimatedItemText =
-      approxPerKg && Number.isFinite(now) && now > 0
-        ? `Estimated product price · ${formatAud(now)} (${getApproxSizeLabel(row, product)})`
+      approxProduct
+      && priceSource === "AUTO"
+      && autoNow !== null
+        ? `Estimated product price · ${formatAud(autoNow)} (${getApproxSizeLabel(row, product)})`
         : "";
+
+    const sourceLabel = hasNow ? priceSource : "";
+    const storeName = String(product.store_name || "Coles Griffith").trim();
 
     panel.innerHTML = `
       <div class="lookup-price-head">
-        <span>Coles Griffith</span>
+        <span>${escapeHtml(storeName)}</span>
         ${promo ? '<b class="lookup-promo-badge">PROMO</b>' : ""}
       </div>
-      <div class="lookup-price-values ${approxPerKg ? "lookup-price-values-perkg" : ""}">${priceHtml}</div>
+      <div class="lookup-price-values ${perKg ? "lookup-price-values-perkg" : ""}">${priceHtml}</div>
+      ${sourceLabel ? `<div class="lookup-price-source ${sourceLabel.toLowerCase()}">${sourceLabel}</div>` : ""}
       ${promoText ? `<div class="lookup-price-promo-text">${escapeHtml(promoText)}</div>` : ""}
       ${unitText ? `<div class="lookup-price-unit">${escapeHtml(unitText)}</div>` : ""}
       ${estimatedItemText ? `<div class="lookup-price-estimated-item">${escapeHtml(estimatedItemText)}</div>` : ""}
@@ -2464,12 +2523,11 @@ async function loadProductLookupPrice(row) {
     panel.innerHTML = `
       <div class="lookup-price-unavailable">
         <strong>Griffith price unavailable</strong>
-        <span>Live Coles pricing could not be loaded.</span>
+        <span>No automatic or manual price is currently available.</span>
       </div>
     `;
   }
 }
-
 
 // ---------- PRODUCT CODE LOOKUP ----------
 $("openProductCodeLookupBtn").onclick = () => {
@@ -3094,11 +3152,6 @@ async function addCodeToDraft(code) {
 $("manualCodeForm").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!canManageProductData()) {
-    showToast("Product Code entry is available to Joey, Troy J and Alex S.");
-    return;
-  }
-
   try {
     await addCodeToDraft($("manualCode").value);
     $("manualCode").value = "";
@@ -3482,7 +3535,7 @@ $("clearDraftBtn").onclick = () => {
 };
 
 $("submitRunBtn").onclick = async () => {
-  if (!draft.length) return;
+  if (!draft.length || !currentUser) return;
 
   try {
     $("submitRunBtn").disabled = true;
@@ -3500,41 +3553,17 @@ $("submitRunBtn").onclick = async () => {
           }
     );
 
-    const { data: activeRuns, error: activeRunError } = await supabase
-      .from("run_lists")
-      .select("id, created_at")
-      .eq("status", "active")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: true })
-      .limit(1);
-
-    if (activeRunError) throw activeRunError;
-
-    let runId = activeRuns?.[0]?.id || null;
-    let merged = false;
-    let skipped = 0;
-
-    if (runId) {
-      const { data: mergeResult, error: mergeError } = await supabase.rpc(
-        "gcfr_append_run_items",
-        {
-          _run_id: runId,
-          _items: items,
-        },
-      );
-
-      if (mergeError) throw mergeError;
-
-      merged = true;
-      skipped = Number(mergeResult?.skipped || 0);
-    } else {
-      const { data, error } = await supabase.rpc("submit_mixed_run_list", {
+    const { data, error } = await supabase.rpc(
+      "gcfr_submit_run_for_authenticated",
+      {
         _items: items,
-      });
+      },
+    );
 
-      if (error) throw error;
-      runId = data;
-    }
+    if (error) throw error;
+
+    const created = Boolean(data?.created);
+    const skipped = Number(data?.skipped || 0);
 
     draft = [];
     saveDraft();
@@ -3547,13 +3576,13 @@ $("submitRunBtn").onclick = async () => {
     clearElementValue("productSearch");
     hideProductSearchResults();
 
-    if (merged) {
+    if (created) {
+      showToast("New Run submitted.");
+    } else {
       const suffix = skipped
         ? ` · ${skipped} duplicate${skipped === 1 ? "" : "s"} skipped`
         : "";
       showToast(`Added to the current Run${suffix}.`);
-    } else {
-      showToast("New Run submitted.");
     }
 
     await refreshRuns();
@@ -3564,7 +3593,6 @@ $("submitRunBtn").onclick = async () => {
     $("submitRunBtn").disabled = draft.length === 0;
   }
 };
-
 
 // ---------- CAMERA ----------
 $("scanBtn").onclick = startScanner;
@@ -3637,16 +3665,21 @@ function startScanner() {
 function stopScanner() { scanner?.stop(); }
 
 async function resolveScannedBarcode(barcode) {
-  const { data, error } = await supabase.rpc("resolve_ticket_scan", {
-    _barcode: String(barcode || "").trim(),
-  });
+  const { data, error } = await supabase.rpc(
+    "gcfr_resolve_run_barcode",
+    {
+      _barcode: String(barcode || "").trim(),
+    },
+  );
+
   if (error) {
     if (error.code === "PGRST202" || error.code === "42883") {
       throw new Error("Barcode lookup database update has not been applied yet.");
     }
     throw error;
   }
-  return Array.isArray(data) && data.length === 1 ? data[0] : null;
+
+  return Array.isArray(data) && data.length ? data[0] : null;
 }
 
 async function handleScannedBarcode(barcode) {
@@ -6391,6 +6424,339 @@ function formatChecklistDate(value) {
   }).format(dateFromLocalString(value));
 }
 
+// ---------- ADMIN PRICE / PROMOTION ----------
+function adminPricingStoreId() {
+  return String($("adminPricingStoreId")?.value || "0838").trim() || "0838";
+}
+
+function adminPricingStoreName() {
+  return String($("adminPricingStoreName")?.value || "").trim()
+    || (adminPricingStoreId() === "0838" ? "Coles Griffith" : `Store ${adminPricingStoreId()}`);
+}
+
+function setPriceSourcePill(id, label, state = "") {
+  const pill = $(id);
+  if (!pill) return;
+
+  pill.textContent = label;
+  pill.classList.remove("manual", "auto", "out");
+  if (state) pill.classList.add(state);
+}
+
+function showAdminPricingView() {
+  if (!isOwnerUser()) return;
+
+  stopAdminBarcodeScanner();
+  $("adminHomeView")?.classList.add("hidden");
+  $("adminBarcodeDetailView")?.classList.add("hidden");
+  $("adminProcessPendingView")?.classList.add("hidden");
+  $("adminStockSetupView")?.classList.add("hidden");
+  $("adminPricingView")?.classList.remove("hidden");
+  $("screenTitle").textContent = "Price / Promotion";
+}
+
+$("openPricingManagerBtn")?.addEventListener("click", () => {
+  adminPricingSelectedProduct = null;
+  $("adminPricingSelected")?.classList.add("hidden");
+  $("adminPricingSearchResults")?.classList.add("hidden");
+  $("adminPricingSearchResults").innerHTML = "";
+  $("adminPricingSearch").value = "";
+  showAdminPricingView();
+  $("adminPricingSearch")?.focus();
+});
+
+$("adminPricingBackBtn")?.addEventListener("click", () => {
+  clearTimeout(adminPricingSearchTimer);
+  adminPricingSelectedProduct = null;
+  $("adminPricingSelected")?.classList.add("hidden");
+  showAdminHomeView();
+});
+
+$("adminPricingSearch")?.addEventListener("input", () => {
+  clearTimeout(adminPricingSearchTimer);
+  const query = $("adminPricingSearch").value.trim();
+
+  if (!query) {
+    $("adminPricingSearchResults").classList.add("hidden");
+    $("adminPricingSearchResults").innerHTML = "";
+    return;
+  }
+
+  adminPricingSearchTimer = setTimeout(
+    () => searchAdminPricingProducts(query),
+    140,
+  );
+});
+
+async function searchAdminPricingProducts(query) {
+  if (!isOwnerUser()) return;
+
+  const results = $("adminPricingSearchResults");
+  results.classList.remove("hidden");
+  results.innerHTML = '<div class="search-result-empty">Searching...</div>';
+
+  try {
+    const catalog = await loadProductSearchCatalog();
+    const rows = rankProductSearchResults(catalog, query).slice(0, 30);
+
+    results.innerHTML = "";
+
+    if (!rows.length) {
+      results.innerHTML =
+        '<div class="search-result-empty">No matching products.</div>';
+      return;
+    }
+
+    for (const product of rows) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "stock-search-result";
+      button.innerHTML = `
+        <span>
+          <strong>${escapeHtml(product.name || "Unknown product")}</strong>
+          <small>Product Code ${escapeHtml(product.code || "-")}</small>
+        </span>
+        <b>Price</b>
+      `;
+
+      button.onclick = async () => {
+        results.classList.add("hidden");
+        results.innerHTML = "";
+        $("adminPricingSearch").value = "";
+        await selectAdminPricingProduct(product);
+      };
+
+      results.appendChild(button);
+    }
+  } catch (error) {
+    results.innerHTML =
+      `<div class="search-result-empty">${escapeHtml(error.message)}</div>`;
+  }
+}
+
+async function selectAdminPricingProduct(product) {
+  adminPricingSelectedProduct = product;
+
+  $("adminPricingSelectedName").textContent =
+    product?.name || "Unknown product";
+  $("adminPricingSelectedCode").textContent = product?.code || "-";
+  $("adminPricingSelected")?.classList.remove("hidden");
+
+  const today = localDateString(new Date());
+
+  if (!$("adminManualPromoStart").value) {
+    $("adminManualPromoStart").value = today;
+  }
+
+  if (!$("adminManualPromoEnd").value) {
+    $("adminManualPromoEnd").value = shiftDate(today, 6);
+  }
+
+  await loadAdminPricingValues();
+}
+
+async function loadAdminPricingValues() {
+  if (!isOwnerUser() || !adminPricingSelectedProduct?.code) return;
+
+  const code = adminPricingSelectedProduct.code;
+  const storeId = adminPricingStoreId();
+
+  const [priceResult, promoResult] = await Promise.all([
+    supabase
+      .from("gcfr_manual_prices")
+      .select("price,price_basis,store_name,updated_at")
+      .eq("product_code", code)
+      .eq("store_id", storeId)
+      .maybeSingle(),
+    supabase
+      .from("gcfr_manual_promotions")
+      .select("regular_price,promo_price,price_basis,starts_on,ends_on,status,store_name,updated_at")
+      .eq("product_code", code)
+      .eq("store_id", storeId)
+      .maybeSingle(),
+  ]);
+
+  if (priceResult.error) {
+    showToast(priceResult.error.message);
+    return;
+  }
+
+  if (promoResult.error) {
+    showToast(promoResult.error.message);
+    return;
+  }
+
+  const price = priceResult.data;
+  const promo = promoResult.data;
+
+  $("adminManualPriceValue").value =
+    price?.price == null ? "" : String(price.price);
+  $("adminManualPriceBasis").value = price?.price_basis || "per_kg";
+
+  if (price) {
+    setPriceSourcePill("adminManualPriceStatus", "MANUAL", "manual");
+    if (price.store_name && !$("adminPricingStoreName").value.trim()) {
+      $("adminPricingStoreName").value = price.store_name;
+    }
+  } else {
+    setPriceSourcePill("adminManualPriceStatus", "NOT SET");
+  }
+
+  $("adminManualPromoRegular").value =
+    promo?.regular_price == null ? "" : String(promo.regular_price);
+  $("adminManualPromoPrice").value =
+    promo?.promo_price == null ? "" : String(promo.promo_price);
+  $("adminManualPromoBasis").value = promo?.price_basis || "each";
+
+  const today = localDateString(new Date());
+  $("adminManualPromoStart").value = promo?.starts_on || today;
+  $("adminManualPromoEnd").value = promo?.ends_on || shiftDate(today, 6);
+
+  if (promo?.status === "active" && promo.ends_on >= today) {
+    setPriceSourcePill("adminManualPromoStatus", "MANUAL", "manual");
+  } else if (promo) {
+    setPriceSourcePill("adminManualPromoStatus", "OUT", "out");
+  } else {
+    setPriceSourcePill("adminManualPromoStatus", "NOT SET");
+  }
+
+  if (promo?.store_name && !$("adminPricingStoreName").value.trim()) {
+    $("adminPricingStoreName").value = promo.store_name;
+  }
+}
+
+$("adminPricingStoreId")?.addEventListener("change", async () => {
+  if (adminPricingSelectedProduct) await loadAdminPricingValues();
+});
+
+$("adminManualPriceForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!isOwnerUser() || !adminPricingSelectedProduct?.code) return;
+
+  const price = Number($("adminManualPriceValue").value);
+  if (!Number.isFinite(price) || price <= 0) {
+    showToast("Enter a valid manual price.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("gcfr_manual_prices")
+    .upsert({
+      product_code: adminPricingSelectedProduct.code,
+      store_id: adminPricingStoreId(),
+      store_name: adminPricingStoreName(),
+      price,
+      price_basis: $("adminManualPriceBasis").value,
+      updated_by: currentUser.id,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "product_code,store_id" });
+
+  if (error) {
+    showToast(error.message);
+    return;
+  }
+
+  setPriceSourcePill("adminManualPriceStatus", "MANUAL", "manual");
+  showToast("Manual price saved.");
+});
+
+$("adminManualPriceDeleteBtn")?.addEventListener("click", async () => {
+  if (!isOwnerUser() || !adminPricingSelectedProduct?.code) return;
+
+  const { error } = await supabase
+    .from("gcfr_manual_prices")
+    .delete()
+    .eq("product_code", adminPricingSelectedProduct.code)
+    .eq("store_id", adminPricingStoreId());
+
+  if (error) {
+    showToast(error.message);
+    return;
+  }
+
+  $("adminManualPriceValue").value = "";
+  setPriceSourcePill("adminManualPriceStatus", "NOT SET");
+  showToast("Manual price cleared.");
+});
+
+$("adminManualPromoForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!isOwnerUser() || !adminPricingSelectedProduct?.code) return;
+
+  const promoPrice = Number($("adminManualPromoPrice").value);
+  const regularRaw = $("adminManualPromoRegular").value.trim();
+  const regularPrice = regularRaw ? Number(regularRaw) : null;
+  const startsOn = $("adminManualPromoStart").value;
+  const endsOn = $("adminManualPromoEnd").value;
+
+  if (!Number.isFinite(promoPrice) || promoPrice <= 0) {
+    showToast("Enter a valid promotion price.");
+    return;
+  }
+
+  if (
+    regularPrice !== null
+    && (!Number.isFinite(regularPrice) || regularPrice <= 0)
+  ) {
+    showToast("Enter a valid regular price.");
+    return;
+  }
+
+  if (!startsOn || !endsOn || endsOn < startsOn) {
+    showToast("Check the promotion start and end dates.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("gcfr_manual_promotions")
+    .upsert({
+      product_code: adminPricingSelectedProduct.code,
+      store_id: adminPricingStoreId(),
+      store_name: adminPricingStoreName(),
+      regular_price: regularPrice,
+      promo_price: promoPrice,
+      price_basis: $("adminManualPromoBasis").value,
+      starts_on: startsOn,
+      ends_on: endsOn,
+      status: "active",
+      updated_by: currentUser.id,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "product_code,store_id" });
+
+  if (error) {
+    showToast(error.message);
+    return;
+  }
+
+  setPriceSourcePill("adminManualPromoStatus", "MANUAL", "manual");
+  showToast("Manual promotion saved.");
+});
+
+$("adminManualPromoOutBtn")?.addEventListener("click", async () => {
+  if (!isOwnerUser() || !adminPricingSelectedProduct?.code) return;
+
+  const { error } = await supabase
+    .from("gcfr_manual_promotions")
+    .update({
+      status: "out",
+      updated_by: currentUser.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("product_code", adminPricingSelectedProduct.code)
+    .eq("store_id", adminPricingStoreId());
+
+  if (error) {
+    showToast(error.message);
+    return;
+  }
+
+  setPriceSourcePill("adminManualPromoStatus", "OUT", "out");
+  showToast("Promotion marked OUT.");
+});
+
+
 // ---------- ADMIN BARCODE / PRODUCT DATA ----------
 $("openProcessPendingBtn").onclick = async () => {
   if (!isOwnerUser()) return;
@@ -6411,6 +6777,7 @@ function showAdminProcessPendingView() {
   $("adminHomeView")?.classList.add("hidden");
   $("adminBarcodeDetailView")?.classList.add("hidden");
   $("adminStockSetupView")?.classList.add("hidden");
+  $("adminPricingView")?.classList.add("hidden");
   $("adminProcessPendingView")?.classList.remove("hidden");
   $("screenTitle").textContent = "Process Pending";
 }
@@ -6685,10 +7052,32 @@ $("adminStockSearch").addEventListener("input", () => {
   );
 });
 
-async function searchAdminStockProducts(query) {
-  if (!isOwnerUser()) return;
+$("adminStockLinkSearch")?.addEventListener("input", () => {
+  clearTimeout(adminStockSearchTimer);
 
-  const results = $("adminStockSearchResults");
+  const query = $("adminStockLinkSearch").value.trim();
+  const results = $("adminStockLinkSearchResults");
+
+  if (!query) {
+    results?.classList.add("hidden");
+    if (results) results.innerHTML = "";
+    return;
+  }
+
+  adminStockSearchTimer = setTimeout(
+    () => searchAdminStockProducts(query, "adminStockLinkSearchResults"),
+    140,
+  );
+});
+
+async function searchAdminStockProducts(query, targetId = "adminStockSearchResults") {
+  // Stock Runner users enter this screen after identifying an unknown
+  // barcode as a Factory Code. They must be able to search the product
+  // catalog so the scanned factory ticket can be linked to its product.
+  if (!canManageProductData()) return;
+
+  const results = $(targetId);
+  if (!results) return;
   results.classList.remove("hidden");
   results.innerHTML = '<div class="search-result-empty">Searching...</div>';
 
@@ -6717,7 +7106,8 @@ async function searchAdminStockProducts(query) {
       button.onclick = async () => {
         results.classList.add("hidden");
         results.innerHTML = "";
-        $("adminStockSearch").value = "";
+        if ($("adminStockSearch")) $("adminStockSearch").value = "";
+        if ($("adminStockLinkSearch")) $("adminStockLinkSearch").value = "";
 
         try {
           await stockController.selectForAdmin(product);
@@ -6740,6 +7130,7 @@ function showAdminStockSetupView() {
   $("adminHomeView")?.classList.add("hidden");
   $("adminBarcodeDetailView")?.classList.add("hidden");
   $("adminProcessPendingView")?.classList.add("hidden");
+  $("adminPricingView")?.classList.add("hidden");
   $("adminStockSetupView")?.classList.remove("hidden");
 
   $("screenTitle").textContent = "Stock Setup";
@@ -6768,6 +7159,7 @@ function showAdminHomeView() {
   $("adminBarcodeDetailView")?.classList.add("hidden");
   $("adminProcessPendingView")?.classList.add("hidden");
   $("adminStockSetupView")?.classList.add("hidden");
+  $("adminPricingView")?.classList.add("hidden");
 
   if ($("screen-admin")?.classList.contains("active")) {
     $("screenTitle").textContent = "Admin";
@@ -6778,6 +7170,7 @@ function showAdminBarcodeDetailView() {
   $("adminHomeView")?.classList.add("hidden");
   $("adminProcessPendingView")?.classList.add("hidden");
   $("adminStockSetupView")?.classList.add("hidden");
+  $("adminPricingView")?.classList.add("hidden");
   $("adminBarcodeDetailView")?.classList.remove("hidden");
   $("screenTitle").textContent = "Barcode Data";
 }

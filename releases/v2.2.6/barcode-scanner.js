@@ -1,6 +1,42 @@
 // GCFR v1.51 barcode scanner
 // Optimized for small, short shelf-label barcodes such as EAN-8.
 let decoderPromise;
+let nativeDetectorPromise;
+
+async function loadNativeDetector() {
+  if (!("BarcodeDetector" in window)) return null;
+
+  if (!nativeDetectorPromise) {
+    nativeDetectorPromise = (async () => {
+      try {
+        const wanted = [
+          "ean_8",
+          "ean_13",
+          "upc_a",
+          "upc_e",
+          "code_128",
+          "code_39",
+          "itf",
+          "codabar",
+        ];
+
+        const supported =
+          typeof window.BarcodeDetector.getSupportedFormats === "function"
+            ? await window.BarcodeDetector.getSupportedFormats()
+            : wanted;
+
+        const formats = wanted.filter((format) => supported.includes(format));
+        if (!formats.length) return null;
+
+        return new window.BarcodeDetector({ formats });
+      } catch {
+        return null;
+      }
+    })();
+  }
+
+  return nativeDetectorPromise;
+}
 
 async function loadDecoder() {
   if (!decoderPromise) {
@@ -64,6 +100,10 @@ export function createBarcodeScanner({
   let active = false;
   let processing = false;
   let timer;
+  let nativeDetector = null;
+  let nativeFailures = 0;
+  let decoder = null;
+  let decoderLoadError = null;
 
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d", {
@@ -112,6 +152,8 @@ export function createBarcodeScanner({
     scanButton.classList.remove("hidden");
   }
 
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
   function capture(source, profile) {
     const width = source.videoWidth;
     const height = source.videoHeight;
@@ -132,26 +174,66 @@ export function createBarcodeScanner({
       bounds.height / cover,
     );
 
-    const profiles = [
-      {
-        widthRatio: 1,
-        heightRatio: 1,
-        maxScale: 1.15,
-        maxOutput: 2200,
-      },
-      {
-        widthRatio: 0.94,
-        heightRatio: 0.58,
-        maxScale: 2.4,
-        maxOutput: 2500,
-      },
-      {
-        widthRatio: 0.84,
-        heightRatio: 0.34,
-        maxScale: 3.2,
-        maxOutput: 2800,
-      },
-    ];
+    const profiles = isAndroid
+      ? [
+          // Full visible frame: useful while the user is still aligning.
+          {
+            widthRatio: 1,
+            heightRatio: 1,
+            maxScale: 1,
+            maxOutput: 1800,
+          },
+          // Wide centre band: primary shelf-ticket profile.
+          {
+            widthRatio: 0.96,
+            heightRatio: 0.48,
+            maxScale: 2.1,
+            maxOutput: 2200,
+          },
+          // Tight centre band: short EAN-8 and small printed labels.
+          {
+            widthRatio: 0.90,
+            heightRatio: 0.25,
+            maxScale: 3,
+            maxOutput: 2400,
+          },
+          // Slightly taller tight crop for angled handheld scans.
+          {
+            widthRatio: 0.82,
+            heightRatio: 0.38,
+            maxScale: 2.5,
+            maxOutput: 2300,
+          },
+          // Short thermal supplier/store tickets (for example an 8-digit
+          // Code128/ITF ticket) need the bars to fill much more of the decode
+          // buffer than a normal EAN retail barcode.
+          {
+            widthRatio: 0.72,
+            heightRatio: 0.18,
+            maxScale: 4,
+            maxOutput: 2800,
+          },
+        ]
+      : [
+          {
+            widthRatio: 1,
+            heightRatio: 1,
+            maxScale: 1.15,
+            maxOutput: 2200,
+          },
+          {
+            widthRatio: 0.94,
+            heightRatio: 0.58,
+            maxScale: 2.4,
+            maxOutput: 2500,
+          },
+          {
+            widthRatio: 0.84,
+            heightRatio: 0.34,
+            maxScale: 3.2,
+            maxOutput: 2800,
+          },
+        ];
 
     const selected = profiles[profile % profiles.length];
 
@@ -231,31 +313,50 @@ export function createBarcodeScanner({
     scanButton.classList.add("hidden");
     closeButton.focus();
 
-    status.textContent = "Loading barcode scanner…";
+    status.textContent = "Requesting camera permission…";
 
     try {
-      const decoder = await loadDecoder();
-      if (id !== session) return;
+      const nativeDetectorTask = loadNativeDetector();
 
-      status.textContent = "Requesting camera permission…";
-
-      const media = await navigator.mediaDevices.getUserMedia({
+      let media;
+      try {
+        media = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: {
+              exact: "environment",
+            },
+            width: {
+              ideal: isAndroid ? 2560 : 2560,
+            },
+            height: {
+              ideal: isAndroid ? 1440 : 1440,
+            },
+            frameRate: {
+              ideal: 30,
+            },
+          },
+        });
+      } catch (cameraError) {
+        // Some Android devices reject exact rear-camera constraints.
+        media = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           facingMode: {
             ideal: "environment",
           },
           width: {
-            ideal: 2560,
+            ideal: isAndroid ? 1920 : 2560,
           },
           height: {
-            ideal: 1440,
+            ideal: isAndroid ? 1080 : 1440,
           },
           frameRate: {
             ideal: 30,
           },
         },
       });
+      }
 
       if (id !== session) {
         release(media);
@@ -277,23 +378,69 @@ export function createBarcodeScanner({
       await preview.play();
       if (id !== session) return;
 
-      const track = media.getVideoTracks()[0];
+      nativeDetector = await nativeDetectorTask;
+      decoder = null;
+      decoderLoadError = null;
 
-      try {
-        const capabilities = track.getCapabilities?.() || {};
+      const decoderTask = loadDecoder()
+        .then((loaded) => {
+          decoder = loaded;
+          return loaded;
+        })
+        .catch((error) => {
+          decoderLoadError = error;
+          return null;
+        });
 
-        if (capabilities.focusMode?.includes("continuous")) {
-          await track.applyConstraints({
-            advanced: [
-              {
-                focusMode: "continuous",
-              },
-            ],
-          });
+      if (!nativeDetector) {
+        status.textContent = "Loading barcode scanner…";
+        await decoderTask;
+
+        if (!decoder) {
+          throw decoderLoadError || new Error("Barcode scanner could not load.");
         }
-      } catch {
-        // Optional focus control is unavailable on some phones.
       }
+
+      const track = media.getVideoTracks()[0];
+      const capabilities = track.getCapabilities?.() || {};
+      let focusRefreshAt = 0;
+
+      async function applyScanFocus(force = false) {
+        if (!isAndroid || id !== session || !active) return;
+
+        const now = Date.now();
+        if (!force && now - focusRefreshAt < 1600) return;
+        focusRefreshAt = now;
+
+        try {
+          const advanced = [];
+
+          if (capabilities.focusMode?.includes("continuous")) {
+            advanced.push({ focusMode: "continuous" });
+          } else if (capabilities.focusMode?.includes("single-shot")) {
+            // Re-trigger single-shot AF periodically on Android devices that
+            // do not expose continuous focus to the browser.
+            advanced.push({ focusMode: "single-shot" });
+          }
+
+          // Avoid aggressive zoom: on multi-camera Android phones it can push
+          // the device onto a lens with a worse minimum focus distance.
+          if (capabilities.zoom) {
+            const minZoom = Number(capabilities.zoom.min || 1);
+            const maxZoom = Number(capabilities.zoom.max || minZoom);
+            const targetZoom = Math.min(maxZoom, Math.max(minZoom, 1.15));
+            advanced.push({ zoom: targetZoom });
+          }
+
+          if (advanced.length) {
+            await track.applyConstraints({ advanced });
+          }
+        } catch {
+          // Focus/zoom controls are optional and vary by Android camera stack.
+        }
+      }
+
+      await applyScanFocus(true);
 
       if (id !== session) return;
 
@@ -313,31 +460,69 @@ export function createBarcodeScanner({
             && preview.videoWidth
             && preview.videoHeight
           ) {
-            // Rotate full / wide / tight crops.
-            // Tight crop enlarges very short shelf-label EAN-8 barcodes.
-            const profile = frames++ % 3;
+            // Keep Android autofocus awake while the user moves between shelf
+            // labels and distances. Some devices settle once and stop hunting.
+            await applyScanFocus();
+            // Android Chrome/PWA can use the native detector directly
+            // from the live video frame. This is much lighter than decoding a
+            // large ImageData buffer through WASM on every pass.
+            let foundText = "";
 
-            const results = await decoder.readBarcodes(
-              capture(preview, profile),
-              options,
-            );
+            if (nativeDetector) {
+              try {
+                // Native detection gets the live frame first. ZXing below also
+                // receives enlarged centre crops for small thermal tickets.
+                const nativeResults = await nativeDetector.detect(preview);
+                const foundNative = nativeResults.find(
+                  (result) => result.rawValue?.trim(),
+                );
+
+                if (foundNative) {
+                  foundText = foundNative.rawValue.trim();
+                }
+
+                nativeFailures = 0;
+              } catch {
+                if (++nativeFailures >= 3) {
+                  nativeDetector = null;
+                }
+              }
+            }
+
+            // Do not wait for the native Android detector to fail before
+            // trying ZXing. Chrome's detector is fast but misses some small
+            // shelf-label EAN codes that ZXing can recover from a centre crop.
+            if (!foundText && decoder) {
+              // Rotate full / wide / tight crops.
+              // Android uses smaller buffers so the scan loop stays responsive.
+              const profile = frames++ % (isAndroid ? 5 : 3);
+
+              const results = await decoder.readBarcodes(
+                capture(preview, profile),
+                options,
+              );
+
+              const foundFallback = results.find(
+                (result) =>
+                  result.isValid
+                  && result.text?.trim(),
+              );
+
+              if (foundFallback) {
+                foundText = foundFallback.text.trim();
+              }
+            }
 
             if (id !== session) return;
 
             failures = 0;
 
-            const found = results.find(
-              (result) =>
-                result.isValid
-                && result.text?.trim(),
-            );
-
-            if (found) {
+            if (foundText) {
               processing = true;
               stop();
 
               try {
-                await onResult(found.text.trim());
+                await onResult(foundText);
               } catch (error) {
                 onError(error);
               } finally {
@@ -350,6 +535,12 @@ export function createBarcodeScanner({
             if (Date.now() - started > 5500) {
               status.textContent =
                 "Move closer. Keep only the barcode inside the guide with white space at both ends.";
+            }
+
+            // If native detection is available, ZXing finishes loading in the
+            // background and automatically becomes the fallback on hard labels.
+            if (!decoder && decoderLoadError && !nativeDetector) {
+              throw decoderLoadError;
             }
           } else if (Date.now() - started > 5500) {
             status.textContent =
@@ -374,7 +565,7 @@ export function createBarcodeScanner({
         }
 
         if (id === session && active) {
-          timer = setTimeout(scanFrame, 90);
+          timer = setTimeout(scanFrame, isAndroid ? 75 : 90);
         }
       }
 
@@ -389,7 +580,11 @@ export function createBarcodeScanner({
           ? new Error(
               "Camera permission is blocked. Allow Camera for this site in browser settings.",
             )
-          : error,
+          : error.name === "NotReadableError"
+            ? new Error(
+                "Camera is busy. Close any other app using the camera and retry.",
+              )
+            : error,
       );
     } finally {
       opening = false;
