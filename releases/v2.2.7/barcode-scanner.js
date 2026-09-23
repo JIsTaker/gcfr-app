@@ -584,19 +584,13 @@ export function createBarcodeScanner({
         const snapshotButton = overlay.querySelector(".barcode-snapshot-btn");
         if (snapshotButton) {
           snapshotButton.disabled = true;
-          snapshotButton.textContent = "FOCUSING…";
+          snapshotButton.textContent = "SNAPSHOT…";
         }
-        status.textContent = "Focusing for snapshot…";
+        status.textContent = "Reading snapshot…";
 
         try {
-          // User-requested focus only: never reintroduce focus hunting into the
-          // live scan loop.
-          if (capabilities.focusMode?.includes("single-shot")) {
-            await track.applyConstraints({
-              advanced: [{ focusMode: "single-shot" }],
-            });
-          }
-          await new Promise((resolve) => setTimeout(resolve, 420));
+          // Do not touch camera focus here. The live camera has already settled
+          // under continuous AF; snapshot must freeze that exact stable frame.
           if (id !== session || !active) return;
 
           if (!decoder) {
@@ -643,7 +637,7 @@ export function createBarcodeScanner({
           }
 
           status.textContent =
-            "Snapshot could not read it. Re-align the barcode and tap the guide again.";
+            "Snapshot could not read it. Re-align the barcode and press SNAPSHOT again.";
         } catch (error) {
           if (id === session) {
             status.textContent = "Snapshot failed. Re-align and tap the guide again.";
@@ -654,20 +648,6 @@ export function createBarcodeScanner({
           if (snapshotButton && id === session && active) {
             snapshotButton.disabled = false;
             snapshotButton.textContent = "SNAPSHOT";
-          }
-          // Restore continuous AF once, after the deliberate snapshot attempt.
-          if (
-            id === session &&
-            active &&
-            capabilities.focusMode?.includes("continuous")
-          ) {
-            try {
-              await track.applyConstraints({
-                advanced: [{ focusMode: "continuous" }],
-              });
-            } catch {
-              // Optional camera control.
-            }
           }
         }
       }
