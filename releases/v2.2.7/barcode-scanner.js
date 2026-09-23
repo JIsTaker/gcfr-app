@@ -490,17 +490,15 @@ export function createBarcodeScanner({
       stream = media;
       closeButton.focus({ preventScroll: true });
 
-      const preview = document.createElement("video");
-      preview.muted = true;
-      preview.autoplay = true;
-      preview.playsInline = true;
-      preview.setAttribute("playsinline", "");
-      preview.srcObject = media;
+      video = document.createElement("video");
+      video.muted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.srcObject = media;
+      reader.replaceChildren(video);
 
-      video = preview;
-      reader.replaceChildren(preview);
-
-      await preview.play();
+      await video.play();
       if (id !== session) return;
 
       nativeDetector = await nativeDetectorTask;
@@ -608,14 +606,14 @@ export function createBarcodeScanner({
           // ImageCapture.takePhoto(): on Android that invokes the camera's still
           // capture pipeline and can restart autofocus/hunting after one shot.
           // The frozen canvas is the cached image used for every decode pass.
-          const photoWidth = preview.videoWidth;
-          const photoHeight = preview.videoHeight;
+          const photoWidth = video.videoWidth;
+          const photoHeight = video.videoHeight;
           const frozenCanvas = document.createElement("canvas");
           frozenCanvas.width = photoWidth;
           frozenCanvas.height = photoHeight;
           const frozenContext = frozenCanvas.getContext("2d", { willReadFrequently: true });
           frozenContext.imageSmoothingEnabled = false;
-          frozenContext.drawImage(preview, 0, 0, photoWidth, photoHeight);
+          frozenContext.drawImage(video, 0, 0, photoWidth, photoHeight);
 
           const snapshotPasses = [
             { profile: 0, preprocess: null },
@@ -715,9 +713,9 @@ export function createBarcodeScanner({
 
         try {
           if (
-            preview.readyState >= 2
-            && preview.videoWidth
-            && preview.videoHeight
+            video.readyState >= 2
+            && video.videoWidth
+            && video.videoHeight
           ) {
             // Leave focus alone after camera startup. Re-applying focus from
             // every scan iteration makes some Android cameras hunt continuously,
@@ -731,7 +729,7 @@ export function createBarcodeScanner({
               try {
                 // Native detection gets the live frame first. ZXing below also
                 // receives enlarged centre crops for small thermal tickets.
-                const nativeResults = await nativeDetector.detect(preview);
+                const nativeResults = await nativeDetector.detect(video);
                 const foundNative = nativeResults.find(
                   (result) => result.rawValue?.trim(),
                 );
@@ -790,7 +788,7 @@ export function createBarcodeScanner({
                 ? androidPasses[frames++ % androidPasses.length]
                 : { profile: frames++ % 3, preprocess: null };
 
-              let frame = capture(preview, pass.profile, 0);
+              let frame = capture(video, pass.profile, 0);
               if (pass.preprocess) {
                 frame = preprocessBarcode(frame, pass.preprocess);
               }
