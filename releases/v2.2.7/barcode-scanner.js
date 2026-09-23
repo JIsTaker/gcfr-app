@@ -427,14 +427,15 @@ export function createBarcodeScanner({
     opening = true;
     active = true;
 
-    document.body.appendChild(overlay);
+    // Open the camera request first, directly from the user's tap. Do not move
+    // the existing scanner DOM or shift focus before getUserMedia(): mobile
+    // browsers can treat that as leaving the user-activation path.
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.setAttribute("aria-label", "Scan barcode");
     overlay.classList.remove("hidden");
     document.body.classList.add("scanner-open");
     scanButton.classList.add("hidden");
-    closeButton.focus();
 
     status.textContent = "Requesting camera permission…";
 
@@ -487,6 +488,7 @@ export function createBarcodeScanner({
       }
 
       stream = media;
+      closeButton.focus({ preventScroll: true });
 
       const preview = document.createElement("video");
       preview.muted = true;
