@@ -311,8 +311,13 @@
             <button id="stockStopScannerBtn" class="secondary full" type="button">Close camera</button>
           </div>
 
+          <div class="stock-mode-switch" role="tablist" aria-label="Stock scan mode">
+            <button id="stockBackstockModeBtn" class="stock-mode-btn active" type="button">Backstock Scanning</button>
+            <button id="stockShopfloorModeBtn" class="stock-mode-btn" type="button">Shopfloor Scanning</button>
+          </div>
+
           <div class="stock-quick-actions">
-            <button id="stockScanBtn" class="stock-scan-button" type="button">▣ Scan product / package</button>
+            <button id="stockScanBtn" class="stock-scan-button" type="button">▣ Scan crate / carton</button>
             <div class="stock-search-wrap">
               <input
                 id="stockProductSearch"
@@ -332,7 +337,8 @@
             <div id="stockUnknownMessage" class="item-sub"></div>
 
             <div id="stockUnknownManagerActions" class="stock-unknown-actions hidden">
-              <button id="stockUnknownSellingBtn" class="secondary" type="button">Selling / Product Code</button>
+              <button id="stockUnknownSellingBtn" class="secondary" type="button">Selling Barcode</button>
+              <button id="stockUnknownTicketBtn" class="secondary" type="button">Product Ticket</button>
               <button id="stockUnknownFactoryBtn" class="secondary" type="button">Factory Code</button>
             </div>
 
@@ -432,7 +438,11 @@
           </div>
 
           <div class="stock-calc-block">
-            <div class="stock-calc-title">Display</div>
+            <div class="stock-calc-title">Shopfloor</div>
+            <label class="stock-display-weight">
+              Loose quantity
+              <input id="stockShopfloorLooseQty" inputmode="numeric" type="number" min="0" step="1" placeholder="0">
+            </label>
             <div class="stock-layers">
               <div class="stock-layer-row">
                 <strong>Layer 1</strong>
@@ -457,10 +467,15 @@
               </div>
             </div>
 
-            <label id="stockApproxDisplayWeightField" class="stock-display-weight hidden">
-              Approx unit weight (g)
-              <input id="stockDisplayUnitWeightG" inputmode="decimal" type="number" min="0" step="1" placeholder="e.g. 170">
-            </label>
+            <div id="stockApproxDisplayWeightField" class="stock-display-weight hidden">
+              <span>Approx unit weight</span>
+              <div class="stock-weight-mode">
+                <label><input id="stockUseProductWeight" name="stockWeightMode" type="radio" value="product" checked> Product weight</label>
+                <label><input id="stockUseManualWeight" name="stockWeightMode" type="radio" value="manual"> Manual</label>
+              </div>
+              <input id="stockDisplayUnitWeightG" inputmode="decimal" type="number" min="0" step="1" placeholder="Weight (g)">
+              <small id="stockProductWeightHint" class="item-sub"></small>
+            </div>
           </div>
 
           <div class="stock-summary">
