@@ -916,12 +916,8 @@ export function createBarcodeScanner({
     }
   });
 
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden && active) {
-      stop();
-    }
-  });
-
+  // Mobile browser/PWA chrome can transiently hide the document while the
+  // user is still in the scanner. Do not destroy the camera session here.
   window.addEventListener("pagehide", stop);
 
   return {
