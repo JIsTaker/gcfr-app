@@ -154,7 +154,7 @@ export function createBarcodeScanner({
 
   const isAndroid = /Android/i.test(navigator.userAgent);
 
-  function capture(source, profile) {
+  function capture(source, profile, rotationDeg = 0) {
     const width = source.videoWidth;
     const height = source.videoHeight;
 
@@ -265,17 +265,21 @@ export function createBarcodeScanner({
     // Preserve hard bar edges. Smoothing can blur short EAN-8 labels.
     context.imageSmoothingEnabled = false;
 
+    context.save();
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate((rotationDeg * Math.PI) / 180);
     context.drawImage(
       source,
       (width - sw) / 2,
       (height - sh) / 2,
       sw,
       sh,
-      0,
-      0,
+      -canvas.width / 2,
+      -canvas.height / 2,
       canvas.width,
       canvas.height,
     );
+    context.restore();
 
     return context.getImageData(
       0,
@@ -495,13 +499,23 @@ export function createBarcodeScanner({
             if (!foundText && decoder) {
               // Rotate full / wide / tight crops.
               // Android uses smaller buffers so the scan loop stays responsive.
-              const androidProfileOrder = [1, 2, 4, 1, 3, 2, 4, 0];
-              const profile = isAndroid
-                ? androidProfileOrder[frames++ % androidProfileOrder.length]
-                : frames++ % 3;
+              const androidPasses = [
+                { profile: 1, angle: 0 },
+                { profile: 2, angle: 0 },
+                { profile: 4, angle: 0 },
+                { profile: 2, angle: -4 },
+                { profile: 2, angle: 4 },
+                { profile: 4, angle: -4 },
+                { profile: 4, angle: 4 },
+                { profile: 3, angle: 0 },
+                { profile: 0, angle: 0 },
+              ];
+              const pass = isAndroid
+                ? androidPasses[frames++ % androidPasses.length]
+                : { profile: frames++ % 3, angle: 0 };
 
               const results = await decoder.readBarcodes(
-                capture(preview, profile),
+                capture(preview, pass.profile, pass.angle),
                 options,
               );
 
