@@ -26,6 +26,7 @@ export function initGcfrV2Stock({
     setupData: [],
     scanMode: "backstock",
     weightMode: "product",
+    backstockEntryMode: "used",
   };
 
   const q = (id) => $(id);
@@ -266,13 +267,27 @@ export function initGcfrV2Stock({
     q("stockSelectedCode").textContent = state.selectedProduct.code;
 
     try {
-      await loadProfileAndPackages();
+      await loadProfileAndPackages(false);
       if (state.selectedProduct !== selection) return;
+
+      const hasSavedProfile = !!state.profile;
+      if (!state.profile) {
+        const inferred = inferProfileFromName(state.selectedProduct.name);
+        if (inferred.stock_type) {
+          state.profile = {
+            product_code: state.selectedProduct.code,
+            ...inferred,
+            inferred: true,
+          };
+        }
+      }
+
+      renderSelectedProduct();
 
       if (["selling", "ticket"].includes(state.pendingBarcodeMode) && state.pendingBarcode) {
         await savePendingProductBarcode();
       } else if (state.pendingBarcodeMode === "factory" && state.pendingBarcode) {
-        if (!state.profile) {
+        if (!hasSavedProfile) {
           openProfileSetup();
           showToast("Set 1 Each or Approx first, then save the Factory Code package.");
         } else {
@@ -880,6 +895,9 @@ export function initGcfrV2Stock({
       backstock ? "▣ Scan crate / carton" : "▣ Scan selling / product ticket";
 
     closeUnknownBarcode();
+    if (q("stockUsedEntryInput")) q("stockUsedEntryInput").value = "";
+    state.backstockEntryMode = "used";
+    if (state.profile) renderCalculator();
   }
 
   function syncWeightMode() {
@@ -898,6 +916,130 @@ export function initGcfrV2Stock({
     recalc();
   }
 
+  function renderBackstockQuickEntry() {
+    const box = q("stockBackstockQuickEntry");
+    if (!box || !state.profile) return;
+
+    const each = state.profile.stock_type === "each";
+    const pack = selectedPackage();
+    const manualPackage = !each && pack?.approx_weight_mode === "manual";
+    const newCount = each
+      ? cleanInt(q("stockNewPackagesEach")?.value)
+      : manualPackage
+        ? state.manualWeights.length
+        : cleanInt(q("stockNewPackagesApprox")?.value);
+    const usedTotal = each
+      ? cleanInt(q("stockRemainingEach")?.value)
+      : cleanNumber(q(manualPackage ? "stockRemainingKgManual" : "stockRemainingKg")?.value);
+
+    if (q("stockNewPackageCount")) {
+      q("stockNewPackageCount").textContent = each || !manualPackage
+        ? String(newCount)
+        : `${newCount} weighed`;
+    }
+
+    if (q("stockUsedTotal")) {
+      q("stockUsedTotal").textContent = each
+        ? `${usedTotal} each`
+        : `${usedTotal.toFixed(2)} kg`;
+    }
+
+    const input = q("stockUsedEntryInput");
+    if (input) {
+      input.step = each ? "1" : "0.01";
+      input.inputMode = each ? "numeric" : "decimal";
+      input.placeholder = state.backstockEntryMode === "newWeight"
+        ? "New package weight kg"
+        : each
+          ? "Used each"
+          : "Used kg";
+    }
+
+    const button = q("stockAddNewPackageBtn");
+    if (button) {
+      button.disabled = !pack;
+      button.textContent = manualPackage ? "+ New" : "+ New";
+    }
+
+    const hint = q("stockBackstockEntryHint");
+    if (hint) {
+      if (!pack) {
+        hint.textContent = "Scan a registered Factory Code first.";
+      } else if (manualPackage) {
+        hint.textContent = state.backstockEntryMode === "newWeight"
+          ? "Enter the full package weight, then Submit."
+          : "New packages require a weight. Tap New, enter kg, then Submit.";
+      } else if (each) {
+        hint.textContent = `1 new package = ${cleanInt(pack.units_per_package)} each`;
+      } else {
+        hint.textContent = `1 new package = ${cleanNumber(pack.fixed_package_weight_kg).toFixed(2)} kg`;
+      }
+    }
+  }
+
+  function addNewBackstockPackage() {
+    if (!state.profile) return;
+    const pack = selectedPackage();
+    if (!pack) {
+      showToast("Scan a registered Factory Code first.");
+      return;
+    }
+
+    const each = state.profile.stock_type === "each";
+
+    if (each) {
+      const input = q("stockNewPackagesEach");
+      input.value = String(cleanInt(input.value) + 1);
+    } else if (pack.approx_weight_mode === "fixed") {
+      const input = q("stockNewPackagesApprox");
+      input.value = String(cleanInt(input.value) + 1);
+    } else {
+      state.backstockEntryMode = "newWeight";
+      const input = q("stockUsedEntryInput");
+      if (input) {
+        input.value = "";
+        input.placeholder = "New package weight kg";
+        input.focus();
+      }
+      renderBackstockQuickEntry();
+      return;
+    }
+
+    renderBackstockQuickEntry();
+    recalc();
+  }
+
+  function submitBackstockUsed() {
+    if (!state.profile) return;
+    const input = q("stockUsedEntryInput");
+    const rawValue = cleanNumber(input?.value);
+    if (rawValue <= 0) {
+      showToast("Enter a value greater than zero.");
+      return;
+    }
+
+    const each = state.profile.stock_type === "each";
+    const pack = selectedPackage();
+
+    if (!each && pack?.approx_weight_mode === "manual" && state.backstockEntryMode === "newWeight") {
+      state.manualWeights.push(rawValue);
+      renderManualWeights();
+      state.backstockEntryMode = "used";
+    } else if (each) {
+      const target = q("stockRemainingEach");
+      target.value = String(cleanInt(target.value) + cleanInt(rawValue));
+    } else {
+      const target = q(pack?.approx_weight_mode === "manual"
+        ? "stockRemainingKgManual"
+        : "stockRemainingKg");
+      target.value = String(cleanNumber(target.value) + rawValue);
+    }
+
+    if (input) input.value = "";
+    renderBackstockQuickEntry();
+    recalc();
+  }
+
   function renderCalculator() {
     if (!state.profile) {
       q("stockCalculator").classList.add("hidden");
@@ -908,13 +1050,25 @@ export function initGcfrV2Stock({
 
     const each = state.profile.stock_type === "each";
     const pack = selectedPackage();
+    const backstock = state.scanMode === "backstock";
 
-    q("stockEachCalculator").classList.toggle("hidden", !each);
-    q("stockApproxCalculator").classList.toggle("hidden", each);
-    // Saved averages are defaults, not a substitute for today's measured weight.
-    q("stockApproxDisplayWeightField").classList.toggle("hidden", each);
+    q("stockEachCalculator")?.classList.add("hidden");
+    q("stockApproxCalculator")?.classList.add("hidden");
+    q("stockBackstockQuickEntry")?.classList.toggle("hidden", !backstock);
+    q("stockShopfloorCalculator")?.classList.toggle("hidden", backstock);
+    q("stockPackageSelectWrap")?.classList.toggle(
+      "hidden",
+      !backstock || state.packages.length === 0
+    );
 
-    q("stockPackageSelect").value = state.selectedPackageId || "";
+    if (q("stockPackageSelect")) {
+      q("stockPackageSelect").value = state.selectedPackageId || "";
+    }
+
+    q("stockApproxDisplayWeightField")?.classList.toggle(
+      "hidden",
+      backstock || each
+    );
 
     if (!each) {
       const defaultWeight = cleanNumber(state.profile.default_unit_weight_g);
@@ -923,16 +1077,13 @@ export function initGcfrV2Stock({
           ? `Product weight: ${defaultWeight} g`
           : "No product weight saved — use Manual.";
       }
-      if (state.weightMode === "product") {
+      if (state.weightMode === "product" && q("stockDisplayUnitWeightG")) {
         q("stockDisplayUnitWeightG").value = defaultWeight ? String(defaultWeight) : "";
         q("stockDisplayUnitWeightG").readOnly = true;
       }
-
-      const manualMode = !pack || pack.approx_weight_mode === "manual";
-      q("stockApproxFixedControls").classList.toggle("hidden", manualMode);
-      q("stockApproxManualControls").classList.toggle("hidden", !manualMode);
     }
 
+    renderBackstockQuickEntry();
     recalc();
   }
 
@@ -944,29 +1095,30 @@ export function initGcfrV2Stock({
     const displayItems = displayCount();
 
     let packageTotal = 0;
-    let displayTotal = 0;
-    let grandTotal = 0;
 
     if (each) {
-      const newPackages = cleanInt(q("stockNewPackagesEach").value);
-      const remainingEach = cleanInt(q("stockRemainingEach").value);
+      const newPackages = cleanInt(q("stockNewPackagesEach")?.value);
+      const remainingEach = cleanInt(q("stockRemainingEach")?.value);
       const unitsPerPackage = cleanInt(pack?.units_per_package);
 
       packageTotal = (newPackages * unitsPerPackage) + remainingEach;
-      displayTotal = displayItems;
-      grandTotal = packageTotal + displayTotal;
+      const grandItems = packageTotal + displayItems;
 
-      q("stockPackageSubtotal").textContent = `${packageTotal} each`;
-      q("stockDisplaySubtotal").textContent = `${displayTotal} each`;
-      q("stockGrandTotal").textContent = `${grandTotal} each`;
+      q("stockPackageSubtotal").textContent = `${packageTotal} items`;
+      q("stockDisplaySubtotal").textContent = `${displayItems} items`;
+      q("stockGrandTotal").textContent = `${grandItems} items`;
+      if (q("stockShopfloorItemTotal")) {
+        q("stockShopfloorItemTotal").textContent = `${displayItems} items`;
+      }
+      if (q("stockShopfloorWeightTotal")) q("stockShopfloorWeightTotal").textContent = "";
     } else {
       const manualMode = !pack || pack.approx_weight_mode === "manual";
       const remainingKg = cleanNumber(
-        q(manualMode ? "stockRemainingKgManual" : "stockRemainingKg").value
+        q(manualMode ? "stockRemainingKgManual" : "stockRemainingKg")?.value
       );
 
       if (pack?.approx_weight_mode === "fixed") {
-        const newPackages = cleanInt(q("stockNewPackagesApprox").value);
+        const newPackages = cleanInt(q("stockNewPackagesApprox")?.value);
         packageTotal =
           (newPackages * cleanNumber(pack.fixed_package_weight_kg)) + remainingKg;
       } else {
@@ -975,18 +1127,39 @@ export function initGcfrV2Stock({
       }
 
       const unitWeightG = state.weightMode === "manual"
-        ? cleanNumber(q("stockDisplayUnitWeightG").value)
+        ? cleanNumber(q("stockDisplayUnitWeightG")?.value)
         : cleanNumber(state.profile.default_unit_weight_g);
 
-      displayTotal = displayItems * unitWeightG / 1000;
-      grandTotal = packageTotal + displayTotal;
+      const displayWeightKg = unitWeightG
+        ? displayItems * unitWeightG / 1000
+        : 0;
+      const backstockItems = unitWeightG
+        ? Math.round(packageTotal * 1000 / unitWeightG)
+        : 0;
+      const grandItems = backstockItems + displayItems;
+      const grandWeightKg = packageTotal + displayWeightKg;
 
-      q("stockPackageSubtotal").textContent = `${packageTotal.toFixed(2)} kg`;
+      q("stockPackageSubtotal").textContent = unitWeightG
+        ? `${packageTotal.toFixed(2)} kg · ~${backstockItems} items`
+        : `${packageTotal.toFixed(2)} kg`;
       q("stockDisplaySubtotal").textContent = unitWeightG
-        ? `${displayTotal.toFixed(2)} kg`
+        ? `${displayItems} items · ~${displayWeightKg.toFixed(2)} kg`
         : `${displayItems} items · enter unit weight`;
-      q("stockGrandTotal").textContent = `${grandTotal.toFixed(2)} kg`;
+      q("stockGrandTotal").textContent = unitWeightG
+        ? `${grandItems} items · ~${grandWeightKg.toFixed(2)} kg`
+        : `${displayItems} items + ${packageTotal.toFixed(2)} kg`;
+
+      if (q("stockShopfloorItemTotal")) {
+        q("stockShopfloorItemTotal").textContent = `${displayItems} items`;
+      }
+      if (q("stockShopfloorWeightTotal")) {
+        q("stockShopfloorWeightTotal").textContent = unitWeightG
+          ? `Estimated ${displayWeightKg.toFixed(2)} kg`
+          : "Choose Product weight or Manual weight.";
+      }
     }
+
+    renderBackstockQuickEntry();
   }
 
   function renderManualWeights() {
@@ -1554,11 +1727,14 @@ export function initGcfrV2Stock({
       "stockLayer2Deep",
       "stockLayer3Across",
       "stockLayer3Deep",
+      "stockShopfloorLooseQty",
+      "stockUsedEntryInput",
     ].forEach((id) => {
       if (q(id)) q(id).value = "";
     });
 
     state.manualWeights = [];
+    state.backstockEntryMode = "used";
     renderManualWeights();
 
     if (state.profile?.default_unit_weight_g) {
@@ -1686,6 +1862,14 @@ export function initGcfrV2Stock({
   });
 
   q("stockClearCalculatorBtn").onclick = clearCalculator;
+  q("stockAddNewPackageBtn")?.addEventListener("click", addNewBackstockPackage);
+  q("stockUsedSubmitBtn")?.addEventListener("click", submitBackstockUsed);
+  q("stockUsedEntryInput")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitBackstockUsed();
+    }
+  });
 
   [
     "stockNewPackagesEach",

@@ -400,8 +400,24 @@
             </select>
           </div>
 
+          <div id="stockBackstockQuickEntry" class="stock-calc-block">
+            <div class="stock-calc-title">Backstock</div>
+            <div class="stock-backstock-entry">
+              <button id="stockAddNewPackageBtn" class="primary stock-new-package-btn" type="button">+ New</button>
+              <label class="stock-used-entry">
+                <span>Used</span>
+                <input id="stockUsedEntryInput" inputmode="decimal" type="number" min="0" step="0.01" placeholder="Used stock">
+              </label>
+              <button id="stockUsedSubmitBtn" class="secondary stock-used-submit-btn" type="button">Submit</button>
+            </div>
+            <div id="stockBackstockEntryHint" class="item-sub"></div>
+            <div class="stock-backstock-running">
+              <span>New <strong id="stockNewPackageCount">0</strong></span>
+              <span>Used <strong id="stockUsedTotal">0</strong></span>
+            </div>
+          </div>
 
-          <div id="stockEachCalculator" class="stock-calc-block">
+          <div id="stockEachCalculator" class="stock-calc-block hidden">
             <div class="stock-calc-title">Backroom / package stock</div>
             <div class="stock-two-inputs">
               <label>
@@ -443,7 +459,7 @@
             </div>
           </div>
 
-          <div class="stock-calc-block">
+          <div id="stockShopfloorCalculator" class="stock-calc-block">
             <div class="stock-calc-title">Shopfloor</div>
             <label class="stock-display-weight">
               Loose quantity
@@ -471,6 +487,12 @@
                 <input id="stockLayer3Deep" inputmode="numeric" type="number" min="0" step="1" placeholder="Deep">
                 <div id="stockLayer3Total" class="stock-layer-total">0</div>
               </div>
+            </div>
+
+            <div class="stock-shopfloor-result">
+              <span>Shopfloor total</span>
+              <strong id="stockShopfloorItemTotal">0 items</strong>
+              <small id="stockShopfloorWeightTotal"></small>
             </div>
 
             <div id="stockApproxDisplayWeightField" class="stock-display-weight hidden">

@@ -1178,3 +1178,18 @@ body {
 .stock-setup-data-row>div:first-child{min-width:0}
 .stock-setup-data-row small{display:block;margin-top:4px;color:#6f8075;white-space:normal;word-break:break-word}
 .stock-setup-data-row .stock-package-actions{flex:0 0 auto}
+
+
+/* Scan-first Stock Calculator workflow */
+.stock-backstock-entry{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:end}
+.stock-new-package-btn,.stock-used-submit-btn{min-height:46px;white-space:nowrap}
+.stock-used-entry{display:grid;gap:5px;min-width:0}
+.stock-used-entry>span{font-size:11px;font-weight:850;color:#5c6f62}
+.stock-used-entry input{width:100%;min-width:0}
+.stock-backstock-running{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:#627267}
+.stock-backstock-running strong{color:#173924}
+.stock-shopfloor-result{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin-top:10px;padding:11px 12px;border:1px solid #dfe9e2;border-radius:12px;background:#f7faf8}
+.stock-shopfloor-result>span{font-size:12px;font-weight:800;color:#52665a}
+.stock-shopfloor-result>strong{font-size:18px;color:#173924}
+.stock-shopfloor-result>small{grid-column:1 / -1;color:#718177}
+@media(max-width:420px){.stock-backstock-entry{grid-template-columns:auto 1fr}.stock-used-submit-btn{grid-column:2}.stock-new-package-btn{grid-row:1 / span 2;height:100%}}
