@@ -1998,7 +1998,7 @@ button {
 
 /* Full-screen scanner. Keep the full video frame visible for decoding. */
 body.scanner-open { overflow: hidden; }
-body.scanner-open #appShell { visibility: hidden; }
+body.scanner-open #appShell { visibility: visible; }
 body.scanner-open #toast { z-index: 10002; }
 #scannerWrap:not(.hidden) {
   position: fixed; inset: 0; z-index: 10000;
