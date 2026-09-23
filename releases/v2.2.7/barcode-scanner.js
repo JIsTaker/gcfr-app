@@ -630,6 +630,33 @@ export function createBarcodeScanner({
           ];
 
           status.textContent = "Reading cached snapshot…";
+
+          // First let Android/Chrome's native barcode detector inspect the
+          // frozen image itself. Live native detection was already useful, but
+          // snapshot previously skipped it and only used ZXing.
+          if (nativeDetector) {
+            try {
+              const nativeResults = await nativeDetector.detect(frozenCanvas);
+              const foundNative = nativeResults.find(
+                (result) => result.rawValue?.trim(),
+              );
+              if (foundNative) {
+                processing = true;
+                stop();
+                try {
+                  await onResult(foundNative.rawValue.trim());
+                } catch (error) {
+                  onError(error);
+                } finally {
+                  processing = false;
+                }
+                return;
+              }
+            } catch {
+              // Continue with ZXing photo passes.
+            }
+          }
+
           for (const pass of snapshotPasses) {
             if (id !== session || !active) return;
             let frame = capture(frozenCanvas, pass.profile, 0);
