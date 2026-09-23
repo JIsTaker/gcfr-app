@@ -892,6 +892,8 @@ export function initGcfrV2Stock({
           } catch {}
           await handleBarcode(barcode);
         },
+        onTextCandidates: (candidates) =>
+          resolveTicketTextCandidate(candidates, false),
         onError: (error) => {
           console.error("Stock barcode scanner:", error);
           showToast(error.message || "Barcode scanner failed.", 6000);
@@ -951,6 +953,40 @@ export function initGcfrV2Stock({
     if (error) throw error;
     return data || null;
   }
+
+  async function resolveTicketTextCandidate(candidates, adminMode = false) {
+    const values = [...new Set(
+      (candidates || [])
+        .map((value) => normalizeScannedBarcode(value))
+        .filter((value) => /^\d{6,8}$/.test(value))
+    )];
+
+    if (!values.length) return "";
+
+    const catalog = await loadCatalog();
+    const productCodes = new Set(catalog.map((product) => String(product.code || "").trim()));
+
+    for (const value of values) {
+      if (productCodes.has(value)) return value;
+
+      const factory = await findFactoryBarcode(value);
+      if (factory && (adminMode || state.scanMode === "backstock")) return value;
+
+      const stored = await findStoredBarcode(value);
+      if (!stored) continue;
+
+      if (
+        adminMode
+        || state.scanMode === "shopfloor"
+        || stored.barcode_type === "factory_barcode"
+      ) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
 
   async function detectTicketProduct(barcode) {
     if (!/^\d{8}$/.test(barcode)) return null;
@@ -1250,6 +1286,8 @@ export function initGcfrV2Stock({
           if (!barcode) return;
           await handleAdminBarcode(barcode);
         },
+        onTextCandidates: (candidates) =>
+          resolveTicketTextCandidate(candidates, true),
         onError: (error) => {
           console.error("Admin Stock scanner:", error);
           showToast(error.message || "Barcode scanner failed.", 6000);
