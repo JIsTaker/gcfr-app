@@ -712,10 +712,12 @@ export function initGcfrV2Stock({
     state.scanMode = nextMode;
 
     const backstock = state.scanMode === "backstock";
-    q("stockBackstockModeBtn")?.classList.toggle("active", backstock);
-    q("stockBackstockModeBtn")?.setAttribute("aria-selected", String(backstock));
-    q("stockShopfloorModeBtn")?.classList.toggle("active", !backstock);
-    q("stockShopfloorModeBtn")?.setAttribute("aria-selected", String(!backstock));
+    const backInput = q("stockBackstockModeInput");
+    const shopInput = q("stockShopfloorModeInput");
+    if (backInput) backInput.checked = backstock;
+    if (shopInput) shopInput.checked = !backstock;
+    backInput?.closest(".stock-mode-btn")?.classList.toggle("active", backstock);
+    shopInput?.closest(".stock-mode-btn")?.classList.toggle("active", !backstock);
 
     if (q("stockScanBtn")) q("stockScanBtn").textContent =
       backstock ? "▣ Scan crate / carton" : "▣ Scan selling / product ticket";
@@ -1443,18 +1445,12 @@ export function initGcfrV2Stock({
     renderCalculator();
   };
 
-  const stockBackstockModeBtn = q("stockBackstockModeBtn");
-  const stockShopfloorModeBtn = q("stockShopfloorModeBtn");
-  if (stockBackstockModeBtn) stockBackstockModeBtn.onclick = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setScanMode("backstock");
-  };
-  if (stockShopfloorModeBtn) stockShopfloorModeBtn.onclick = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setScanMode("shopfloor");
-  };
+  q("stockBackstockModeInput")?.addEventListener("change", (event) => {
+    if (event.target.checked) setScanMode("backstock");
+  });
+  q("stockShopfloorModeInput")?.addEventListener("change", (event) => {
+    if (event.target.checked) setScanMode("shopfloor");
+  });
   q("stockUnknownSellingBtn")?.addEventListener("click", () => chooseUnknownType("selling", "stock"));
   q("stockUnknownTicketBtn")?.addEventListener("click", () => chooseUnknownType("ticket", "stock"));
   q("stockUnknownFactoryBtn")?.addEventListener("click", () => chooseUnknownType("factory", "stock"));

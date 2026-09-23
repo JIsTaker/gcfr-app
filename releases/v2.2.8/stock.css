@@ -1167,3 +1167,7 @@ body {
   -webkit-tap-highlight-color:rgba(0,0,0,.08);
 }
 .stock-hero::after{pointer-events:none}
+
+.stock-mode-btn input[type="radio"]{position:absolute;opacity:0;pointer-events:none}
+.stock-mode-btn{cursor:pointer;user-select:none;-webkit-user-select:none}
+.stock-mode-btn:has(input:checked){border-color:#77b88e;background:#eaf7ee;color:#17603d}

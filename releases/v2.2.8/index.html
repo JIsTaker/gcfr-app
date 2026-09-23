@@ -311,9 +311,15 @@
             <button id="stockStopScannerBtn" class="secondary full" type="button">Close camera</button>
           </div>
 
-          <div class="stock-mode-switch" role="tablist" aria-label="Stock scan mode">
-            <button id="stockBackstockModeBtn" class="stock-mode-btn active" type="button">Backstock Scanning</button>
-            <button id="stockShopfloorModeBtn" class="stock-mode-btn" type="button">Shopfloor Scanning</button>
+          <div class="stock-mode-switch" role="radiogroup" aria-label="Stock scan mode">
+            <label class="stock-mode-btn active" for="stockBackstockModeInput">
+              <input id="stockBackstockModeInput" name="stockScanMode" type="radio" value="backstock" checked>
+              <span>Backstock Scanning</span>
+            </label>
+            <label class="stock-mode-btn" for="stockShopfloorModeInput">
+              <input id="stockShopfloorModeInput" name="stockScanMode" type="radio" value="shopfloor">
+              <span>Shopfloor Scanning</span>
+            </label>
           </div>
 
           <div class="stock-quick-actions">
