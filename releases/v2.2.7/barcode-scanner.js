@@ -158,7 +158,7 @@ export function createBarcodeScanner({
     const width = source.videoWidth || source.width;
     const height = source.videoHeight || source.height;
 
-    const bounds = source === preview
+    const bounds = source === video
       ? source.getBoundingClientRect()
       : { width, height };
     const cover = Math.max(
