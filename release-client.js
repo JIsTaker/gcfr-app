@@ -7,6 +7,7 @@
 
   let releaseState = null;
   let bootConfirmed = false;
+  let forcedRestartStarted = false;
 
   const setText = (id, value) => {
     const el = document.getElementById(id);
@@ -60,17 +61,26 @@
         return;
       }
 
-      if (state.current && state.current !== THIS_RELEASE) {
-        void askWorkerToCache(state.current);
-        if (!document.getElementById("gcfrReleaseUpdate")) {
-          const button = document.createElement("button");
-          button.id = "gcfrReleaseUpdate";
-          button.type = "button";
-          button.textContent = "Update available — reopen when ready";
-          button.style.cssText = "position:fixed;top:env(safe-area-inset-top,0px);left:8px;right:8px;z-index:10000;padding:12px;border:1px solid #cbd5cf;border-radius:12px;background:#fff;color:#173f2b";
-          button.onclick = () => location.replace(rootUrl.href);
-          document.body.appendChild(button);
+      if (state.current && state.current !== THIS_RELEASE && !forcedRestartStarted) {
+        forcedRestartStarted = true;
+
+        // Give the active release one synchronous chance to cache only this
+        // signed-in user's unfinished work before moving to the new release.
+        if (typeof CustomEvent === "function") {
+          window.dispatchEvent(new CustomEvent("gcfr:before-forced-update", {
+            detail: {
+              from: THIS_RELEASE,
+              to: state.current,
+              bootConfirmed,
+            },
+          }));
         }
+
+        await askWorkerToCache(state.current);
+
+        const target = new URL(rootUrl.href);
+        target.searchParams.set("updated", state.current);
+        setTimeout(() => location.replace(target.href), 80);
       }
     } catch (error) {
       console.warn("Release check failed:", error);
